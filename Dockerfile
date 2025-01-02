@@ -1,4 +1,4 @@
-FROM openjdk:21-slim as builder
+FROM public.ecr.aws/amazoncorretto/amazoncorretto:21 as builder
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ RUN chmod +x ./gradlew
 
 RUN ./gradlew build -x test --no-daemon
 
-FROM openjdk:21-slim
+FROM public.ecr.aws/amazoncorretto/amazoncorretto:21
 
 WORKDIR /app
 
