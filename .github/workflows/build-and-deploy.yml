@@ -1,0 +1,76 @@
+name: Build and Push to ECR, then Deploy to ECS
+
+on:
+  push:
+    branches: [ "development" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      # ----------------------------------------------------
+      # 1) Configure AWS Credentials for ECR in us-east-1
+      # ----------------------------------------------------
+      - name: Configure AWS Credentials (us-east-1 for ECR)
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Log in to Amazon ECR
+        run: |
+          aws --version
+          aws ecr-public get-login-password --region us-east-1 \
+            | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Derive image tag
+        run: echo "IMAGE_TAG=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
+
+      - name: Gradle build
+        run: |
+          echo "Build started on $(date)"
+          ./gradlew clean build
+
+      - name: Docker build and tag
+        run: |
+          echo "Building Docker image..."
+          docker build -t ${{ secrets.REPOSITORY_URI }}:latest .
+          docker tag ${{ secrets.REPOSITORY_URI }}:latest ${{ secrets.REPOSITORY_URI }}:${{ env.IMAGE_TAG }}
+
+      - name: Docker push
+        run: |
+          echo "Pushing Docker images..."
+          docker push ${{ secrets.REPOSITORY_URI }}:latest
+          docker push ${{ secrets.REPOSITORY_URI }}:${{ env.IMAGE_TAG }}
+
+      # ----------------------------------------------------
+      # 2) Re-configure AWS Credentials for ECS in eu-west-1
+      # ----------------------------------------------------
+      - name: Configure AWS Credentials (eu-west-1 for ECS)
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+
+      - name: Replace placeholders in task definition
+        run: |
+          sed -i "s|<AWS_ACCOUNT_ID>|${{ secrets.AWS_ACCOUNT_ID }}|g" task-definition.json
+          sed -i "s|<IMAGE_PLACEHOLDER>|${{ secrets.REPOSITORY_URI }}:${{ env.IMAGE_TAG }}|g" task-definition.json
+          sed -i "s|<MICROSERVICE_NAME>|${{ secrets.MICROSERVICE_NAME }}|g" task-definition.json
+
+      - name: Deploy to Amazon ECS (eu-west-1)
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          service: whatstheplan-${{ secrets.MICROSERVICE_NAME }}-service
+          cluster: whatstheplan
+          wait-for-service-stability: true
