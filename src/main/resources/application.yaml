@@ -4,6 +4,11 @@ server:
 spring:
   application:
     name: events
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${AUTH_SERVER_URL}
 
 management:
   endpoints:
