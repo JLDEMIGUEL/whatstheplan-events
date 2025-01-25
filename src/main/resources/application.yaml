@@ -9,6 +9,14 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${AUTH_SERVER_URL}
+  r2dbc:
+    url: r2dbc:postgresql://${DB_HOST:localhost}:5432/whatstheplan?currentSchema=events
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  flyway:
+    schemas: events
+    baseline-on-migrate: true
+    enabled: true
 
 management:
   endpoints:

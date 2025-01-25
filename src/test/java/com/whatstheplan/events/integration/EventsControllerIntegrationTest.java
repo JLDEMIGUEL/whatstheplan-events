@@ -27,4 +27,13 @@ class EventsControllerIntegrationTest extends BaseIntegrationTest {
                 .exchange()
                 .expectStatus().isOk();
     }
+
+    @Test
+    void testEndpointWithoutToken_ShouldReturnUnauthorized() {
+        webTestClient
+                .get()
+                .uri("/events/test")
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
 }

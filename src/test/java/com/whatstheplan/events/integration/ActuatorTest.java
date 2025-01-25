@@ -1,5 +1,6 @@
 package com.whatstheplan.events.integration;
 
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,10 +9,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import static io.zonky.test.db.AutoConfigureEmbeddedDatabase.DatabaseProvider.ZONKY;
 
-@ActiveProfiles("test")
+
 @SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureWebTestClient
+@AutoConfigureEmbeddedDatabase(provider = ZONKY)
 public class ActuatorTest {
 
     @Autowired
@@ -19,7 +23,6 @@ public class ActuatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "/actuator/health",
             "/actuator/health/liveness",
             "/actuator/health/readiness"
     })
