@@ -8,15 +8,25 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${AUTH_SERVER_URL}
+          issuer-uri: ${AUTH_SERVER_URL:localhost}
   r2dbc:
-    url: r2dbc:postgresql://${DB_HOST:localhost}:5432/whatstheplan?currentSchema=events
+    url: r2dbc:postgresql://${DB_HOST:localhost}:5432/whatstheplan?currentSchema=events&ssl=true&sslmode=require
     username: ${DB_USER}
     password: ${DB_PASSWORD}
   flyway:
     schemas: events
     baseline-on-migrate: true
     enabled: true
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/whatstheplan?currentSchema=events
+    user: ${DB_USER}
+    password: ${DB_PASSWORD}
+
+aws:
+  s3:
+    accessKey: ${S3_ACCESS_KEY:}
+    secretKey: ${S3_SECRET_KEY:}
+    bucketName: ${S3_BUCKET:}
+    region: ${S3_REGION:eu-west-1}
 
 management:
   endpoints:
