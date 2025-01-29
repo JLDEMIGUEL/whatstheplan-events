@@ -23,9 +23,15 @@ public class EventCategories extends AbstractAuditingEntity<UUID> {
     private String activityType;
     private UUID eventId;
 
+    @SuppressWarnings("unchecked")
     public static List<EventCategories> from(List<String> activitiesTypes, UUID eventId) {
-        return activitiesTypes.stream()
-                .map(activityType -> new EventCategories(UUID.randomUUID(), activityType, eventId))
+        return (List<EventCategories>) activitiesTypes.stream()
+                .map(activityType -> EventCategories.builder()
+                        .id(UUID.randomUUID())
+                        .activityType(activityType)
+                        .eventId(eventId)
+                        .isNew(true)
+                        .build())
                 .toList();
     }
 }

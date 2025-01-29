@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Column;
 
 import java.io.Serial;
@@ -19,7 +21,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(value = {"createdDate", "lastModifiedDate"}, allowGetters = true)
-public abstract class AbstractAuditingEntity<T> implements Serializable {
+public abstract class AbstractAuditingEntity<T> implements Persistable<T>, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -35,4 +37,13 @@ public abstract class AbstractAuditingEntity<T> implements Serializable {
     @Builder.Default
     @Column(value = "last_modified_date")
     private Instant lastModifiedDate = Instant.now();
+
+    @Transient
+    private boolean isNew;
+
+    @Override
+    @Transient
+    public boolean isNew() {
+        return this.isNew || getId() == null;
+    }
 }

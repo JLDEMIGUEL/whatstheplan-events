@@ -1,0 +1,2 @@
+ALTER TABLE IF EXISTS event
+    ADD COLUMN recurrence TEXT;

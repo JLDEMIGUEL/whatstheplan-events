@@ -45,6 +45,8 @@ dependencies {
     implementation 'software.amazon.awssdk:s3'
     implementation 'software.amazon.awssdk:netty-nio-client'
 
+    implementation 'org.mnode.ical4j:ical4j:4.1.0'
+    
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 

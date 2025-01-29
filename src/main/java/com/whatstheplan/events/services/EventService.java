@@ -22,7 +22,7 @@ public class EventService {
 
     public Mono<EventResponse> saveEvent(EventRequest request, FilePart image) {
         return s3Service.uploadFile(image)
-                .flatMap(request::toEntity)
+                .flatMap(request::toNewEntity)
                 .doOnSuccess(entity -> log.info("Saving event with data: {}", entity))
                 .flatMap(eventsRepository::insert)
                 .doOnSuccess(savedEvent -> log.info("Event inserted into repository with ID: {}", savedEvent.getId()))

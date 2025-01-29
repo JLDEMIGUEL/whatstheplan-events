@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static com.whatstheplan.events.utils.RecurrenceUtils.generateRRule;
 import static com.whatstheplan.events.utils.Utils.getUserId;
 
 @Data
@@ -25,9 +26,23 @@ public class EventRequest {
     private Duration duration;
     private String location;
     private int capacity;
+    private RecurrenceRequest recurrence;
     private List<String> activityTypes;
 
-    public Mono<Event> toEntity(String imageKey) {
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RecurrenceRequest {
+        private String frequency;
+        private Integer interval;
+        private List<String> byDays;
+        private List<Integer> byMonthDay;
+        private LocalDateTime until;
+        private Integer count;
+    }
+
+    public Mono<Event> toNewEntity(String imageKey) {
         return getUserId()
                 .map(userId -> Event.builder()
                         .id(UUID.randomUUID())
@@ -38,7 +53,9 @@ public class EventRequest {
                         .location(location)
                         .capacity(capacity)
                         .imageKey(imageKey)
+                        .recurrence(generateRRule(recurrence))
                         .organizerId(userId)
+                        .isNew(true)
                         .build());
     }
 }

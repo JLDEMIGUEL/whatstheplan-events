@@ -26,8 +26,7 @@ public class EventResponse {
     private String location;
     private int capacity;
     private String imageKey;
-    private boolean isRecurring;
-    private String recurrencePattern;
+    private String recurrence;
     private UUID organizerId;
     private String organizerUsername;
     private String organizerEmail;
@@ -45,6 +44,7 @@ public class EventResponse {
                 .location(event.getLocation())
                 .capacity(event.getCapacity())
                 .imageKey(event.getImageKey())
+                .recurrence(event.getRecurrence())
                 .organizerId(event.getOrganizerId())
                 .organizerEmail("") //TODO
                 .organizerUsername("") //TODO
