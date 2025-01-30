@@ -9,10 +9,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.io.IOException;
@@ -29,18 +31,22 @@ public class BaseIntegrationTest {
     protected static final UUID USER_ID = UUID.randomUUID();
 
     protected static final SecurityMockServerConfigurers.JwtMutator JWT = mockJwt().jwt(jwt -> jwt
-            .claim("sub", USER_ID)
-            .claim("cognito:groups", List.of("user")));
+                    .claim("sub", USER_ID)
+                    .claim("cognito:groups", List.of("user")))
+            .authorities(new SimpleGrantedAuthority("ROLE_user"));
 
-    @Autowired
+    protected static final SecurityMockServerConfigurers.JwtMutator JWT_NO_ROLE = mockJwt().jwt(jwt -> jwt
+            .claim("sub", USER_ID));
+
+    @MockitoSpyBean
     protected EventsRepository eventsRepository;
 
-    @Autowired
+    @MockitoSpyBean
     protected EventsCategoriesRepository eventsCategoriesRepository;
 
     @Autowired
     protected WebTestClient webTestClient;
-    
+
     private static EmbeddedPostgres pg;
 
 

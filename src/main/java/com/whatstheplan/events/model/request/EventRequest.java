@@ -1,6 +1,12 @@
 package com.whatstheplan.events.model.request;
 
+import com.whatstheplan.events.model.Recurrence;
 import com.whatstheplan.events.model.entities.Event;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,31 +22,33 @@ import static com.whatstheplan.events.utils.RecurrenceUtils.generateRRule;
 import static com.whatstheplan.events.utils.Utils.getUserId;
 
 @Data
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class EventRequest {
+    @NotBlank(message = "Title is required.")
     private String title;
-    private String description;
-    private LocalDateTime dateTime;
-    private Duration duration;
-    private String location;
-    private int capacity;
-    private RecurrenceRequest recurrence;
-    private List<String> activityTypes;
 
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class RecurrenceRequest {
-        private String frequency;
-        private Integer interval;
-        private List<String> byDays;
-        private List<Integer> byMonthDay;
-        private LocalDateTime until;
-        private Integer count;
-    }
+    @NotBlank(message = "Description is required.")
+    private String description;
+
+    @NotNull(message = "Date and time must be specified.")
+    @Future(message = "Event date must be in the future.")
+    private LocalDateTime dateTime;
+
+    @NotNull(message = "Duration is required.")
+    private Duration duration;
+
+    @NotBlank(message = "Location is required.")
+    private String location;
+
+    @Min(value = 1, message = "Capacity must be at least 1.")
+    private int capacity;
+
+    @Valid
+    private Recurrence recurrence;
+
+    private List<String> activityTypes;
 
     public Mono<Event> toNewEntity(String imageKey) {
         return getUserId()

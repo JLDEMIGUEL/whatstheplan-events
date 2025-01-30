@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.util.UUID;
@@ -38,6 +39,18 @@ public class S3Service {
                 })
                 .doOnSuccess(path -> log.info("Uploaded file to S3 with path: {}", path))
                 .doOnError(error -> log.error("Failed to upload file to S3", error));
+    }
+
+    public Mono<Void> deleteFile(String filePath) {
+        DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                .bucket(bucketName)
+                .key(filePath)
+                .build();
+
+        return Mono.fromFuture(s3AsyncClient.deleteObject(deleteRequest))
+                .then()
+                .doOnSuccess(aVoid -> log.info("Deleted file from S3 with path: {}", filePath))
+                .doOnError(error -> log.error("Failed to delete file from S3 with path: {}", filePath, error));
     }
 
     private PutObjectRequest createPutObjectRequest(FilePart file, String filePath, byte[] bytes) {
