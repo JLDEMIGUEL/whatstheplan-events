@@ -11,6 +11,7 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -24,6 +25,7 @@ import java.util.UUID;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
 
 @SpringBootTest
+@DirtiesContext
 @ActiveProfiles("test")
 @AutoConfigureWebTestClient
 public class BaseIntegrationTest {
@@ -52,12 +54,17 @@ public class BaseIntegrationTest {
 
     @BeforeAll
     static void beforeAll() {
+        try {
+            pg = EmbeddedPostgres.start();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to start embedded PostgreSQL", e);
+        }
     }
 
     @BeforeEach
     void beforeEach() {
-        eventsRepository.deleteAll().subscribe();
-        eventsCategoriesRepository.deleteAll().subscribe();
+        eventsRepository.deleteAll().block();
+        eventsCategoriesRepository.deleteAll().block();
     }
 
     @AfterAll
@@ -69,20 +76,14 @@ public class BaseIntegrationTest {
 
     @DynamicPropertySource
     static void registerR2dbcProperties(DynamicPropertyRegistry registry) {
-        try {
-            pg = EmbeddedPostgres.start();
+        String jdbcUrl = pg.getJdbcUrl("postgres", "postgres");
+        String r2dbcUrl = "r2dbc:" + jdbcUrl.replace("jdbc:", "").split("\\?")[0];
 
-            String jdbcUrl = pg.getJdbcUrl("postgres", "postgres");
-            String r2dbcUrl = "r2dbc:" + jdbcUrl.replace("jdbc:", "").split("\\?")[0];
-
-            registry.add("spring.r2dbc.url", () -> r2dbcUrl + "?currentSchema=events");
-            registry.add("spring.r2dbc.username", () -> "postgres");
-            registry.add("spring.r2dbc.password", () -> "postgres");
-            registry.add("spring.flyway.url", () -> jdbcUrl);
-            registry.add("spring.flyway.username", () -> "postgres");
-            registry.add("spring.flyway.password", () -> "postgres");
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to start embedded PostgreSQL", e);
-        }
+        registry.add("spring.r2dbc.url", () -> r2dbcUrl + "?currentSchema=events");
+        registry.add("spring.r2dbc.username", () -> "postgres");
+        registry.add("spring.r2dbc.password", () -> "postgres");
+        registry.add("spring.flyway.url", () -> jdbcUrl);
+        registry.add("spring.flyway.username", () -> "postgres");
+        registry.add("spring.flyway.password", () -> "postgres");
     }
 }

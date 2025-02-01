@@ -29,8 +29,8 @@ class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
             Event event,
             List<EventCategories> eventCategories) {
         // given
-        eventsRepository.insert(event).subscribe();
-        eventsCategoriesRepository.saveAll(eventCategories).subscribe();
+        eventsRepository.insert(event).block();
+        eventsCategoriesRepository.saveAll(eventCategories).collectList().block();
 
         // when - then
         webTestClient

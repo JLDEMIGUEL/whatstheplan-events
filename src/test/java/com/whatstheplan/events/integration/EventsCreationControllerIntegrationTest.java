@@ -26,6 +26,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -223,7 +224,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
         //assertThat(eventResponse.getOrganizerEmail()).isEqualTo(null); TODO
         assertThat(eventResponse.getCreatedDate()).isNotNull();
         assertThat(eventResponse.getLastModifiedDate()).isNotNull();
-        
+
         assertThat(eventResponse.getActivityTypes()).containsAll(request.getActivityTypes());
         assertThat(eventResponse.getActivityTypes().size()).isEqualTo(request.getActivityTypes().size());
 
@@ -243,7 +244,9 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
         assertThat(event.getLocation()).isEqualTo(request.getLocation());
         assertThat(event.getCapacity()).isEqualTo(request.getCapacity());
         assertThat(event.getImageKey()).contains(IMAGE.getFilename());
-        assertThat(event.getRecurrence()).contains("FREQ=DAILY", "UNTIL=20260130T", "BYDAY=MO,TH");
+        assertThat(event.getRecurrence()).contains("FREQ=DAILY",
+                "UNTIL=" + LocalDateTime.now().plusYears(1).format(DateTimeFormatter.ofPattern("yyyyMMdd")),
+                "BYDAY=MO,TH");
         assertThat(event.getOrganizerId()).isEqualTo(USER_ID);
         //assertThat(event.getOrganizerUsername()).isEqualTo(null); TODO
         //assertThat(event.getOrganizerEmail()).isEqualTo(null); TODO
