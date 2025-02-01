@@ -15,12 +15,15 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.Validator;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
 import java.util.function.Function;
 
 @Slf4j
@@ -31,11 +34,18 @@ public class EventsController {
     private final EventService eventService;
     private final Validator validator;
 
+    @GetMapping("/{eventId}")
+    public Mono<ResponseEntity<EventResponse>> getEventById(
+            @PathVariable("eventId") UUID eventId) {
+        return Mono.just(eventId)
+                .flatMap(eventService::findById)
+                .map(ResponseEntity::ok);
+    }
+
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Mono<ResponseEntity<EventResponse>> createEvent(
             @RequestPart("event") Mono<EventRequest> eventRequestMono,
             @RequestPart("image") Mono<FilePart> imagePartMono) {
-
         Mono<EventRequest> validatedEvent = eventRequestMono
                 .doOnNext(this::validateEventRequest)
                 .onErrorMap(ValidationException.class, Function.identity());

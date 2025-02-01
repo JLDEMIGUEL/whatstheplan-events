@@ -43,7 +43,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class EventsControllerIntegrationTest extends BaseIntegrationTest {
+class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
 
     @MockitoBean
     private S3AsyncClient s3Client;
@@ -223,11 +223,11 @@ class EventsControllerIntegrationTest extends BaseIntegrationTest {
         //assertThat(eventResponse.getOrganizerEmail()).isEqualTo(null); TODO
         assertThat(eventResponse.getCreatedDate()).isNotNull();
         assertThat(eventResponse.getLastModifiedDate()).isNotNull();
+        
         assertThat(eventResponse.getActivityTypes()).containsAll(request.getActivityTypes());
+        assertThat(eventResponse.getActivityTypes().size()).isEqualTo(request.getActivityTypes().size());
 
         assertRecurrenceEquals(request.getRecurrence(), eventResponse.getRecurrence());
-
-        assertThat(eventResponse.getActivityTypes().size()).isEqualTo(request.getActivityTypes().size());
     }
 
     private static void assertEventEntity(EventRequest request, List<Event> events, List<EventCategories> eventCategories) {

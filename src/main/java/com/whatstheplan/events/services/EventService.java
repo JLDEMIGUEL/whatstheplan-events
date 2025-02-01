@@ -1,5 +1,6 @@
 package com.whatstheplan.events.services;
 
+import com.whatstheplan.events.exceptions.EventNotFoundException;
 import com.whatstheplan.events.exceptions.UploadImageToS3Exception;
 import com.whatstheplan.events.model.entities.EventCategories;
 import com.whatstheplan.events.model.request.EventRequest;
@@ -12,6 +13,7 @@ import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
@@ -22,6 +24,19 @@ public class EventService {
     private final S3Service s3Service;
     private final EventsRepository eventsRepository;
     private final EventsCategoriesRepository eventsCategoriesRepository;
+
+    public Mono<EventResponse> findById(UUID eventId) {
+        return eventsRepository.findById(eventId)
+                .doOnSuccess(event -> log.info("Found event with id {} and data {}", eventId, event))
+                .switchIfEmpty(Mono.error(new EventNotFoundException("Event not found with id: " + eventId)))
+                .flatMap(event -> eventsCategoriesRepository.findAllByEventId(eventId)
+                        .doOnError(ex -> {
+                            throw new RuntimeException("Unable to retrieve event categories for event id: " + eventId);
+                        })
+                        .collectList()
+                        .map(categories -> EventResponse.fromEntity(event, categories)))
+                .doOnSuccess(response -> log.info("Returning event response: {}", response));
+    }
 
     public Mono<EventResponse> saveEvent(EventRequest request, FilePart image) {
         AtomicReference<String> imagePath = new AtomicReference<>();

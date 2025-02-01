@@ -1,5 +1,6 @@
 package com.whatstheplan.events.controller;
 
+import com.whatstheplan.events.exceptions.EventNotFoundException;
 import com.whatstheplan.events.exceptions.FileValidationException;
 import com.whatstheplan.events.exceptions.UploadImageToS3Exception;
 import com.whatstheplan.events.exceptions.ValidationException;
@@ -26,5 +27,16 @@ public class EventsControllerAdvice {
     @ExceptionHandler(FileValidationException.class)
     public ResponseEntity<ErrorResponse> handleFileValidationException(FileValidationException ex) {
         return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(EventNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEventNotFoundException(EventNotFoundException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleOtherExceptions(Exception ex) {
+        log.error("Error: {}", ex.getMessage(), ex);
+        return ResponseEntity.internalServerError().body(new ErrorResponse("Internal Server Error"));
     }
 }
