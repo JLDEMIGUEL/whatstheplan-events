@@ -2,6 +2,7 @@ package com.whatstheplan.events.services;
 
 import com.whatstheplan.events.exceptions.EventNotFoundException;
 import com.whatstheplan.events.exceptions.UploadImageToS3Exception;
+import com.whatstheplan.events.model.entities.Event;
 import com.whatstheplan.events.model.entities.EventCategories;
 import com.whatstheplan.events.model.request.EventRequest;
 import com.whatstheplan.events.model.response.EventResponse;
@@ -13,6 +14,7 @@ import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -44,10 +46,8 @@ public class EventService {
                 .doOnError(ex -> {
                     throw new UploadImageToS3Exception("Error uploading image to s3", ex);
                 })
-                .flatMap(uploadedPath -> {
-                    imagePath.set(uploadedPath);
-                    return request.toNewEntity(uploadedPath);
-                })
+                .doOnNext(imagePath::set)
+                .flatMap(request::toNewEntity)
                 .doOnSuccess(entity -> log.info("Saving event with data: {}", entity))
                 .flatMap(eventsRepository::insert)
                 .doOnSuccess(savedEvent -> log.info("Event inserted into repository with ID: {}", savedEvent.getId()))
@@ -60,5 +60,48 @@ public class EventService {
                         .map(savedCategories -> EventResponse.fromEntity(savedEvent, savedCategories))
                 ).onErrorResume(ex -> s3Service.deleteFile(imagePath.get())
                         .then(Mono.error(new UploadImageToS3Exception("Error while processing image", ex))));
+    }
+
+    public Mono<EventResponse> updateEvent(UUID eventId, EventRequest request, Optional<FilePart> image) {
+        return eventsRepository.findById(eventId)
+                .switchIfEmpty(Mono.error(new EventNotFoundException("Event not found with id: " + eventId)))
+                .flatMap(event -> image
+                        .map(filePart -> updateEventAndImage(event, request, filePart))
+                        .orElseGet(() -> updateJustEvent(event, request, event.getImageKey())));
+    }
+
+    private Mono<EventResponse> updateJustEvent(Event event, EventRequest request, String imageKey) {
+        return request.toUpdateEntity(event.getId(), imageKey)
+                .doOnSuccess(entity -> log.info("Updating event with data: {}", entity))
+                .flatMap(eventsRepository::update)
+                .doOnSuccess(savedEvent -> log.info("Event updated into repository with ID: {}", savedEvent.getId()))
+                .flatMap(savedEvent ->
+                        eventsCategoriesRepository.deleteAllByEventId(event.getId())
+                                .then(eventsCategoriesRepository.saveAll(
+                                                EventCategories.from(
+                                                        request.getActivityTypes(), savedEvent.getId()))
+                                        .doOnSubscribe(sub -> log.info("Updated event categories for event ID: {}", savedEvent.getId()))
+                                        .collectList()
+                                        .doOnSuccess(savedCategories -> log.info("Event categories updated successfully: {}", savedCategories))
+                                        .doOnError(error -> log.error("Failed to update event categories", error))
+                                        .map(savedCategories -> EventResponse.fromEntity(savedEvent, savedCategories))
+                                ));
+    }
+
+    private Mono<EventResponse> updateEventAndImage(Event event, EventRequest request, FilePart newImage) {
+        AtomicReference<String> newImagePathRef = new AtomicReference<>();
+        String oldImagePath = event.getImageKey();
+
+        return s3Service.uploadFile(newImage)
+                .doOnNext(newImagePathRef::set)
+                .flatMap(newImagePath -> updateJustEvent(event, request, newImagePath))
+                .flatMap(response ->
+                        s3Service.deleteFile(oldImagePath)
+                                .thenReturn(response)
+                )
+                .onErrorResume(ex ->
+                        s3Service.deleteFile(newImagePathRef.get())
+                                .then(Mono.error(new UploadImageToS3Exception("Error updating image", ex)))
+                );
     }
 }

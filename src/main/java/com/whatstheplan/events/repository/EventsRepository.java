@@ -40,4 +40,22 @@ public interface EventsRepository extends ReactiveCrudRepository<Event, UUID> {
             RETURNING *
             """)
     Mono<Event> insert(Event event);
+
+    @Query("""
+            UPDATE event
+            SET
+                title = :#{#event.title},
+                description = :#{#event.description},
+                date_time = :#{#event.dateTime},
+                duration = CAST(:#{#event.duration} AS INTERVAL),
+                location = :#{#event.location},
+                capacity = :#{#event.capacity},
+                image_key = :#{#event.imageKey},
+                recurrence = :#{#event.recurrence},
+                organizer_id = :#{#event.organizerId},
+                last_modified_date = :#{#event.lastModifiedDate}
+            WHERE id = :#{#event.id}
+            RETURNING *
+            """)
+    Mono<Event> update(Event event);
 }

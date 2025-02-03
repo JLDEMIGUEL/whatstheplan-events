@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.server.ServerWebInputException;
 
 @Slf4j
 @ControllerAdvice
@@ -32,6 +33,13 @@ public class EventsControllerAdvice {
     @ExceptionHandler(EventNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleEventNotFoundException(EventNotFoundException ex) {
         return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
+    }
+
+
+    @ExceptionHandler(ServerWebInputException.class)
+    public ResponseEntity<ErrorResponse> handleServerWebInputException(ServerWebInputException ex) {
+        log.error("Input Exception: {}", ex.getMessage(), ex);
+        return ResponseEntity.badRequest().body(new ErrorResponse(ex.getReason()));
     }
 
     @ExceptionHandler(Exception.class)

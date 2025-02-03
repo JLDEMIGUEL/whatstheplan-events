@@ -7,6 +7,7 @@ import com.whatstheplan.events.model.request.EventRequest;
 import com.whatstheplan.events.model.response.ErrorResponse;
 import com.whatstheplan.events.model.response.EventResponse;
 import com.whatstheplan.events.testconfig.BaseIntegrationTest;
+import com.whatstheplan.events.testconfig.utils.DataMockUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -25,12 +26,15 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static com.whatstheplan.events.testconfig.utils.AssertionUtils.assertEventEntity;
 import static com.whatstheplan.events.testconfig.utils.AssertionUtils.assertEventResponse;
+import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventCategories;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventCreationRequestNotRecurrent;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventCreationRequestRecurrent;
+import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventEntity;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateImage;
 import static com.whatstheplan.events.testconfig.utils.S3MockUtils.mockS3DeleteObject;
 import static com.whatstheplan.events.testconfig.utils.S3MockUtils.mockS3PutObject;
@@ -41,64 +45,113 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
+class EventsUpdateControllerIntegrationTest extends BaseIntegrationTest {
 
     @MockitoBean
     private S3AsyncClient s3Client;
 
-    private static final ByteArrayResource IMAGE = generateImage("fake-image-content".getBytes(), "event-image.png");
+    private static final ByteArrayResource NEW_IMAGE = generateImage("new_fake-image-content".getBytes(), "new_event-image.png");
 
     @ParameterizedTest
-    @MethodSource("provideEventRequests")
-    void whenANewEventCreationRequest_thenShouldStoreEventAndCategoriesAndImage(EventRequest request) {
+    @MethodSource("provideEventEntitiesAndRequest")
+    void whenANewEventUpdateRequestWithNoImageUpdate_thenShouldStoreEventAndCategoriesAndImage(
+            Event event,
+            List<EventCategories> eventCategories,
+            EventRequest request) {
         // given
-        mockS3PutObject(s3Client);
+        eventsRepository.insert(event).block();
+        eventsCategoriesRepository.saveAll(eventCategories).collectList().block();
 
         // when - then
         webTestClient
                 .mutateWith(JWT)
-                .post()
-                .uri("/events")
+                .put()
+                .uri("/events/" + event.getId())
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters
-                        .fromMultipartData("event", request)
-                        .with("image", IMAGE))
+                        .fromMultipartData("event", request))
                 .exchange()
-                .expectStatus().isCreated()
+                .expectStatus().isOk()
                 .expectBodyList(EventResponse.class)
                 .hasSize(1)
                 .consumeWith(response -> {
-                    assertEventResponse(request, IMAGE.getFilename(), response.getResponseBody().get(0));
+                    assertEventResponse(request, event.getImageKey(), response.getResponseBody().get(0));
 
                     List<Event> events = eventsRepository.findAll().collectList().block();
-                    List<EventCategories> eventCategories = eventsCategoriesRepository.findAll().collectList().block();
-                    assertEventEntity(request, IMAGE.getFilename(), events.get(0), eventCategories);
+                    List<EventCategories> eventCategoriesEntities = eventsCategoriesRepository.findAll().collectList().block();
+                    assertEventEntity(request, event.getImageKey(), events.get(0), eventCategoriesEntities);
+
+                    verify(s3Client, times(0))
+                            .putObject(any(PutObjectRequest.class), any(AsyncRequestBody.class));
+                    verify(s3Client, times(0))
+                            .deleteObject(any(DeleteObjectRequest.class));
+                });
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideEventEntitiesAndRequest")
+    void whenANewEventUpdateRequestWithImageUpdate_thenShouldUploadImageAndStoreEventAndCategoriesAndImage(
+            Event event,
+            List<EventCategories> eventCategories,
+            EventRequest request) {
+        // given
+        eventsRepository.insert(event).block();
+        eventsCategoriesRepository.saveAll(eventCategories).collectList().block();
+        mockS3PutObject(s3Client);
+        mockS3DeleteObject(s3Client);
+
+        // when - then
+        webTestClient
+                .mutateWith(JWT)
+                .put()
+                .uri("/events/" + event.getId())
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters
+                        .fromMultipartData("event", request)
+                        .with("image", NEW_IMAGE))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(EventResponse.class)
+                .hasSize(1)
+                .consumeWith(response -> {
+                    assertEventResponse(request, NEW_IMAGE.getFilename(), response.getResponseBody().get(0));
+
+                    List<Event> events = eventsRepository.findAll().collectList().block();
+                    List<EventCategories> eventCategoriesEntities = eventsCategoriesRepository.findAll().collectList().block();
+                    assertEventEntity(request, NEW_IMAGE.getFilename(), events.get(0), eventCategoriesEntities);
 
                     verify(s3Client, times(1))
                             .putObject(any(PutObjectRequest.class), any(AsyncRequestBody.class));
+                    verify(s3Client, times(1))
+                            .deleteObject(any(DeleteObjectRequest.class));
                 });
     }
 
     @Test
-    void whenANewEventCreationRequestFailsToSaveInDatabase_thenWillDeleteImageAndReturnBadRequest() {
+    void whenANewEventUpdateRequestFailsToSaveInDatabase_thenWillDeleteImageAndReturnBadRequest() {
         // given
-        EventRequest request = generateEventCreationRequestRecurrent();
+        Event event = generateEventEntity();
+        List<EventCategories> eventCategories = generateEventCategories(event.getId());
+        eventsRepository.insert(event).block();
+        eventsCategoriesRepository.saveAll(eventCategories).collectList().block();
+
+        EventRequest request = DataMockUtils.generateEventCreationRequestRecurrent();
 
         mockS3PutObject(s3Client);
         mockS3DeleteObject(s3Client);
 
-        when(eventsRepository.insert(any(Event.class)))
+        when(eventsRepository.update(any(Event.class)))
                 .thenThrow(new DataAccessResourceFailureException("Error saving entity in database"));
 
         // when - then
         webTestClient
                 .mutateWith(JWT)
-                .post()
-                .uri("/events")
+                .put()
+                .uri("/events/" + event.getId())
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters
                         .fromMultipartData("event", request)
-                        .with("image", IMAGE))
+                        .with("image", NEW_IMAGE))
                 .exchange()
                 .expectStatus().is5xxServerError()
                 .expectBodyList(ErrorResponse.class)
@@ -111,21 +164,32 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                             .putObject(any(PutObjectRequest.class), any(AsyncRequestBody.class));
                     verify(s3Client, times(1))
                             .deleteObject(any(DeleteObjectRequest.class));
+
+                    Event savedEvent = eventsRepository.findById(event.getId()).block();
+                    List<EventCategories> savedEventCategories =
+                            eventsCategoriesRepository.findAllByEventId(event.getId()).collectList().block();
+                    assertEventEntity(event, savedEvent, eventCategories, savedEventCategories);
                 });
     }
 
     @ParameterizedTest
     @MethodSource("invalidRequestProvider")
-    void whenANewEventCreationRequestWithBadParameters_thenWillReturnBadRequest(
+    void whenANewEventUpdateRequestWithBadParameters_thenWillReturnBadRequest(
             EventRequest request,
             ByteArrayResource content,
             List<String> expectedErrorMessages
     ) {
+        // given
+        Event event = generateEventEntity();
+        List<EventCategories> eventCategories = generateEventCategories(event.getId());
+        eventsRepository.insert(event).block();
+        eventsCategoriesRepository.saveAll(eventCategories).collectList().block();
+
         // when - then
         webTestClient
                 .mutateWith(JWT)
-                .post()
-                .uri("/events")
+                .put()
+                .uri("/events/" + event.getId())
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters
                         .fromMultipartData("event", request)
@@ -139,36 +203,48 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void whenANewEventCreationRequestWithMissingRole_thenWillReturnUnauthorized() {
+    void whenANewEventUpdateRequestWithMissingRole_thenWillReturnUnauthorized() {
         // given
-        EventRequest request = generateEventCreationRequestRecurrent();
+        Event event = generateEventEntity();
+        List<EventCategories> eventCategories = generateEventCategories(event.getId());
+        eventsRepository.insert(event).block();
+        eventsCategoriesRepository.saveAll(eventCategories).collectList().block();
+
+        EventRequest request = DataMockUtils.generateEventCreationRequestRecurrent();
 
         // when - then
         webTestClient
                 .mutateWith(JWT_NO_ROLE)
-                .post()
-                .uri("/events")
+                .put()
+                .uri("/events/" + event.getId())
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters
                         .fromMultipartData("event", request)
-                        .with("image", IMAGE))
+                        .with("image", NEW_IMAGE))
                 .exchange()
                 .expectStatus().isForbidden();
     }
 
     @Test
-    void whenANewEventCreationRequestWithMissingToken_thenWillReturnUnauthorized() {
+    void whenANewEventUpdateRequestWithMissingToken_thenWillReturnUnauthorized() {
         webTestClient
                 .get()
-                .uri("/events")
+                .uri("/events/" + UUID.randomUUID())
                 .exchange()
                 .expectStatus().isUnauthorized();
     }
 
-    public static Stream<Arguments> provideEventRequests() {
+
+    private static Stream<Arguments> provideEventEntitiesAndRequest() {
+        Event event = generateEventEntity();
+        List<EventCategories> eventCategories = generateEventCategories(event.getId());
+        EventRequest recurrentRequest = generateEventCreationRequestRecurrent();
+        EventRequest nonRecurrentRequest = generateEventCreationRequestNotRecurrent();
         return Stream.of(
-                Arguments.of(generateEventCreationRequestNotRecurrent()),
-                Arguments.of(generateEventCreationRequestRecurrent())
+                Arguments.of(event, eventCategories, recurrentRequest),
+                Arguments.of(event, List.of(), recurrentRequest),
+                Arguments.of(event, eventCategories, nonRecurrentRequest),
+                Arguments.of(event, List.of(), nonRecurrentRequest)
         );
     }
 
@@ -188,7 +264,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
         return Stream.of(
                 // --- Title is blank ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        DataMockUtils.generateEventCreationRequestRecurrent().toBuilder()
                                 .title("")
                                 .build(),
                         validImage,
@@ -196,7 +272,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- Description is blank ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        DataMockUtils.generateEventCreationRequestRecurrent().toBuilder()
                                 .description("")
                                 .build(),
                         validImage,
@@ -204,7 +280,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- DateTime is null ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        DataMockUtils.generateEventCreationRequestRecurrent().toBuilder()
                                 .dateTime(null)
                                 .build(),
                         validImage,
@@ -212,7 +288,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- DateTime is in the past ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        DataMockUtils.generateEventCreationRequestRecurrent().toBuilder()
                                 .dateTime(LocalDateTime.now().minusDays(1))
                                 .build(),
                         validImage,
@@ -220,7 +296,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- Duration is null ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        DataMockUtils.generateEventCreationRequestRecurrent().toBuilder()
                                 .duration(null)
                                 .build(),
                         validImage,
@@ -228,7 +304,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- Location is blank ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        DataMockUtils.generateEventCreationRequestRecurrent().toBuilder()
                                 .location("")
                                 .build(),
                         validImage,
@@ -236,7 +312,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- Capacity is < 1 ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        DataMockUtils.generateEventCreationRequestRecurrent().toBuilder()
                                 .capacity(0)
                                 .build(),
                         validImage,
@@ -244,7 +320,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- Invalid recurrence frequency ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        DataMockUtils.generateEventCreationRequestRecurrent().toBuilder()
                                 .recurrence(Recurrence.builder()
                                         .frequency("HOURLY") // invalid => violates pattern
                                         .interval(1)
@@ -256,7 +332,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- Recurrence interval <= 0 ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        DataMockUtils.generateEventCreationRequestRecurrent().toBuilder()
                                 .recurrence(Recurrence.builder()
                                         .frequency("DAILY")
                                         .interval(0)
@@ -268,7 +344,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- Recurrence byDays is empty ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        DataMockUtils.generateEventCreationRequestRecurrent().toBuilder()
                                 .recurrence(Recurrence.builder()
                                         .frequency("DAILY")
                                         .interval(1)
@@ -280,7 +356,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- Recurrence until + count both set ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        DataMockUtils.generateEventCreationRequestRecurrent().toBuilder()
                                 .recurrence(Recurrence.builder()
                                         .frequency("DAILY")
                                         .interval(1)
@@ -306,7 +382,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- Multiple validation errors ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        DataMockUtils.generateEventCreationRequestRecurrent().toBuilder()
                                 .title("")                          // Title is blank
                                 .description("")                    // Description is blank
                                 .dateTime(null)                     // DateTime is null

@@ -30,7 +30,7 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 @AutoConfigureWebTestClient
 public class BaseIntegrationTest {
 
-    protected static final UUID USER_ID = UUID.randomUUID();
+    public static final UUID USER_ID = UUID.randomUUID();
 
     protected static final SecurityMockServerConfigurers.JwtMutator JWT = mockJwt().jwt(jwt -> jwt
                     .claim("sub", USER_ID)

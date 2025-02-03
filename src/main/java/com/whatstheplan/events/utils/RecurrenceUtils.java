@@ -20,6 +20,10 @@ import static net.fortuna.ical4j.transform.recurrence.Frequency.YEARLY;
 public class RecurrenceUtils {
 
     public static String generateRRule(Recurrence recurrence) {
+        if (recurrence == null) {
+            return null;
+        }
+
         Recur.Builder<LocalDateTime> builder = new Recur.Builder<>();
 
         // Frequency
@@ -67,6 +71,10 @@ public class RecurrenceUtils {
 
 
     public static Recurrence parseRRule(String rule) {
+        if (rule == null) {
+            return null;
+        }
+
         Recur<LocalDateTime> recur = new Recur<>(rule);
         return Recurrence.builder()
                 .frequency(Optional.ofNullable(recur.getFrequency()).map(Frequency::name).orElse(null))

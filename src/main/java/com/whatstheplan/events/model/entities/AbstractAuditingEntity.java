@@ -11,6 +11,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.InsertOnlyProperty;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -30,6 +31,7 @@ public abstract class AbstractAuditingEntity<T> implements Persistable<T>, Seria
 
     @CreatedDate
     @Builder.Default
+    @InsertOnlyProperty
     @Column(value = "created_date")
     private Instant createdDate = Instant.now();
 

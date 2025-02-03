@@ -18,11 +18,13 @@ import org.springframework.validation.Validator;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -59,6 +61,26 @@ public class EventsController {
                 .map(event -> ResponseEntity.status(HttpStatus.CREATED).body(event));
     }
 
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Mono<ResponseEntity<EventResponse>> updateEvent(
+            @PathVariable("id") UUID eventId,
+            @RequestPart("event") Mono<EventRequest> eventRequestMono,
+            @RequestPart(name = "image", required = false) Mono<FilePart> imagePartMono) {
+        Mono<EventRequest> validatedEvent = eventRequestMono
+                .doOnNext(this::validateEventRequest)
+                .onErrorMap(ValidationException.class, Function.identity());
+
+        Mono<Optional<FilePart>> validatedImage = imagePartMono
+                .map(Optional::of)
+                .switchIfEmpty(Mono.just(Optional.empty()))
+                .doOnNext(this::validateImageUpdate)
+                .onErrorMap(FileValidationException.class, Function.identity());
+
+        return Mono.zip(Mono.just(eventId), validatedEvent, validatedImage)
+                .flatMap(t -> eventService.updateEvent(t.getT1(), t.getT2(), t.getT3()))
+                .map(ResponseEntity::ok);
+    }
+
     private void validateEventRequest(EventRequest request) {
         Errors errors = new BeanPropertyBindingResult(request, "eventRequest");
         validator.validate(request, errors);
@@ -68,6 +90,13 @@ public class EventsController {
                     .map(FieldError::getDefaultMessage)
                     .toList()));
         }
+    }
+
+    private void validateImageUpdate(Optional<FilePart> image) {
+        if (image.isEmpty()) {
+            return;
+        }
+        validateImage(image.get());
     }
 
     private void validateImage(FilePart image) {

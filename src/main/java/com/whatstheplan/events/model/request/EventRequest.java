@@ -66,4 +66,21 @@ public class EventRequest {
                         .isNew(true)
                         .build());
     }
+
+    public Mono<Event> toUpdateEntity(UUID eventId, String imageKey) {
+        return getUserId()
+                .map(userId -> Event.builder()
+                        .id(eventId)
+                        .title(title)
+                        .description(description)
+                        .dateTime(dateTime)
+                        .duration(duration)
+                        .location(location)
+                        .capacity(capacity)
+                        .imageKey(imageKey)
+                        .recurrence(generateRRule(recurrence))
+                        .organizerId(userId)
+                        .isNew(false)
+                        .build());
+    }
 }
