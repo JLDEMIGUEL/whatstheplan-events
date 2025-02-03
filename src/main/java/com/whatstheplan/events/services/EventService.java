@@ -104,4 +104,18 @@ public class EventService {
                                 .then(Mono.error(new UploadImageToS3Exception("Error updating image", ex)))
                 );
     }
+
+    public Mono<Void> deleteById(UUID eventId) {
+        return eventsRepository.findById(eventId)
+                .switchIfEmpty(Mono.error(new EventNotFoundException("Event not found with id: " + eventId)))
+                .flatMap(event ->
+                        s3Service.deleteFile(event.getImageKey())
+                                .doOnError(error -> log.error("Error deleting image for event {}: {}", eventId, error.getMessage()))
+                                .onErrorResume(error -> Mono.empty())
+                )
+                .then(eventsRepository.deleteById(eventId))
+                .then(eventsCategoriesRepository.deleteAllByEventId(eventId))
+                .doOnSuccess(e -> log.info("Successfully deleted event {} and its associated categories", eventId))
+                .doOnError(error -> log.error("Error deleting event {}: {}", eventId, error.getMessage(), error));
+    }
 }

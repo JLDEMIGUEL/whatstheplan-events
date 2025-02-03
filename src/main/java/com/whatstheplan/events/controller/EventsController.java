@@ -15,6 +15,7 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.Validator;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -79,6 +80,14 @@ public class EventsController {
         return Mono.zip(Mono.just(eventId), validatedEvent, validatedImage)
                 .flatMap(t -> eventService.updateEvent(t.getT1(), t.getT2(), t.getT3()))
                 .map(ResponseEntity::ok);
+    }
+
+    @DeleteMapping("/{eventId}")
+    public Mono<ResponseEntity<EventResponse>> deleteEventById(
+            @PathVariable("eventId") UUID eventId) {
+        return Mono.just(eventId)
+                .flatMap(eventService::deleteById)
+                .thenReturn(ResponseEntity.ok().build());
     }
 
     private void validateEventRequest(EventRequest request) {
