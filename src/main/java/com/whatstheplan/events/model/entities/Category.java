@@ -16,21 +16,17 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table
-public class EventCategories implements Persistable<UUID> {
-
+public class Category implements Persistable<UUID> {
     @Id
     private UUID id;
-    private UUID eventId;
-    private UUID categoryId;
-
+    private String name;
     @Transient
     private boolean isNew;
 
-    public static EventCategories from(UUID eventId, UUID categoryId) {
-        return EventCategories.builder()
+    public static Category from(String activitiesType) {
+        return Category.builder()
                 .id(UUID.randomUUID())
-                .eventId(eventId)
-                .categoryId(categoryId)
+                .name(activitiesType)
                 .isNew(true)
                 .build();
     }
@@ -39,5 +35,4 @@ public class EventCategories implements Persistable<UUID> {
     public boolean isNew() {
         return this.isNew || getId() == null;
     }
-
 }

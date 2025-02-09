@@ -1,6 +1,7 @@
 package com.whatstheplan.events.integration;
 
 import com.whatstheplan.events.model.Recurrence;
+import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
 import com.whatstheplan.events.model.entities.EventCategories;
 import com.whatstheplan.events.model.request.EventRequest;
@@ -56,11 +57,11 @@ class EventsUpdateControllerIntegrationTest extends BaseIntegrationTest {
     @MethodSource("provideEventEntitiesAndRequest")
     void whenANewEventUpdateRequestWithNoImageUpdate_thenShouldStoreEventAndCategoriesAndImage(
             Event event,
-            List<EventCategories> eventCategories,
+            List<Category> categories,
             EventRequest request) {
         // given
         eventsRepository.insert(event).block();
-        eventsCategoriesRepository.saveAll(eventCategories).collectList().block();
+        categoryRepository.saveAll(categories).collectList().block();
 
         // when - then
         webTestClient
@@ -78,8 +79,11 @@ class EventsUpdateControllerIntegrationTest extends BaseIntegrationTest {
                     assertEventResponse(request, event.getImageKey(), response.getResponseBody().get(0));
 
                     List<Event> events = eventsRepository.findAll().collectList().block();
-                    List<EventCategories> eventCategoriesEntities = eventsCategoriesRepository.findAll().collectList().block();
-                    assertEventEntity(request, event.getImageKey(), events.get(0), eventCategoriesEntities);
+                    List<EventCategories> eventCategories = eventCategoriesRepository.findAll().collectList().block();
+                    List<Category> categoryEntities = categoryRepository.findAllById(
+                                    eventCategories.stream().map(EventCategories::getCategoryId).toList())
+                            .collectList().block();
+                    assertEventEntity(request, event.getImageKey(), events.get(0), categoryEntities);
 
                     verify(s3Client, times(0))
                             .putObject(any(PutObjectRequest.class), any(AsyncRequestBody.class));
@@ -92,11 +96,14 @@ class EventsUpdateControllerIntegrationTest extends BaseIntegrationTest {
     @MethodSource("provideEventEntitiesAndRequest")
     void whenANewEventUpdateRequestWithImageUpdate_thenShouldUploadImageAndStoreEventAndCategoriesAndImage(
             Event event,
-            List<EventCategories> eventCategories,
+            List<Category> categories,
             EventRequest request) {
         // given
         eventsRepository.insert(event).block();
-        eventsCategoriesRepository.saveAll(eventCategories).collectList().block();
+        categoryRepository.saveAll(categories).collectList().block();
+        eventCategoriesRepository.saveAll(
+                        categories.stream().map(c -> EventCategories.from(event.getId(), c.getId())).toList())
+                .collectList().block();
         mockS3PutObject(s3Client);
         mockS3DeleteObject(s3Client);
 
@@ -117,8 +124,11 @@ class EventsUpdateControllerIntegrationTest extends BaseIntegrationTest {
                     assertEventResponse(request, NEW_IMAGE.getFilename(), response.getResponseBody().get(0));
 
                     List<Event> events = eventsRepository.findAll().collectList().block();
-                    List<EventCategories> eventCategoriesEntities = eventsCategoriesRepository.findAll().collectList().block();
-                    assertEventEntity(request, NEW_IMAGE.getFilename(), events.get(0), eventCategoriesEntities);
+                    List<EventCategories> eventCategories = eventCategoriesRepository.findAll().collectList().block();
+                    List<Category> categoryEntities = categoryRepository.findAllById(
+                                    eventCategories.stream().map(EventCategories::getCategoryId).toList())
+                            .collectList().block();
+                    assertEventEntity(request, NEW_IMAGE.getFilename(), events.get(0), categoryEntities);
 
                     verify(s3Client, times(1))
                             .putObject(any(PutObjectRequest.class), any(AsyncRequestBody.class));
@@ -131,11 +141,15 @@ class EventsUpdateControllerIntegrationTest extends BaseIntegrationTest {
     void whenANewEventUpdateRequestFailsToSaveInDatabase_thenWillDeleteImageAndReturnBadRequest() {
         // given
         Event event = generateEventEntity();
-        List<EventCategories> eventCategories = generateEventCategories(event.getId());
+        List<Category> categories = generateEventCategories(event.getId());
         eventsRepository.insert(event).block();
-        eventsCategoriesRepository.saveAll(eventCategories).collectList().block();
+        categoryRepository.saveAll(categories).collectList().block();
+        eventCategoriesRepository.saveAll(
+                        categories.stream().map(c -> EventCategories.from(event.getId(), c.getId())).toList())
+                .collectList().block();
 
-        EventRequest request = DataMockUtils.generateEventCreationRequestRecurrent();
+
+        EventRequest request = generateEventCreationRequestRecurrent();
 
         mockS3PutObject(s3Client);
         mockS3DeleteObject(s3Client);
@@ -166,9 +180,11 @@ class EventsUpdateControllerIntegrationTest extends BaseIntegrationTest {
                             .deleteObject(any(DeleteObjectRequest.class));
 
                     Event savedEvent = eventsRepository.findById(event.getId()).block();
-                    List<EventCategories> savedEventCategories =
-                            eventsCategoriesRepository.findAllByEventId(event.getId()).collectList().block();
-                    assertEventEntity(event, savedEvent, eventCategories, savedEventCategories);
+                    List<EventCategories> eventCategories = eventCategoriesRepository.findAll().collectList().block();
+                    List<Category> savedCategories = categoryRepository.findAllById(
+                                    eventCategories.stream().map(EventCategories::getCategoryId).toList())
+                            .collectList().block();
+                    assertEventEntity(event, savedEvent, categories, savedCategories);
                 });
     }
 
@@ -181,9 +197,12 @@ class EventsUpdateControllerIntegrationTest extends BaseIntegrationTest {
     ) {
         // given
         Event event = generateEventEntity();
-        List<EventCategories> eventCategories = generateEventCategories(event.getId());
+        List<Category> categories = generateEventCategories(event.getId());
         eventsRepository.insert(event).block();
-        eventsCategoriesRepository.saveAll(eventCategories).collectList().block();
+        categoryRepository.saveAll(categories).collectList().block();
+        eventCategoriesRepository.saveAll(
+                        categories.stream().map(c -> EventCategories.from(event.getId(), c.getId())).toList())
+                .collectList().block();
 
         // when - then
         webTestClient
@@ -206,9 +225,12 @@ class EventsUpdateControllerIntegrationTest extends BaseIntegrationTest {
     void whenANewEventUpdateRequestWithMissingRole_thenWillReturnUnauthorized() {
         // given
         Event event = generateEventEntity();
-        List<EventCategories> eventCategories = generateEventCategories(event.getId());
+        List<Category> categories = generateEventCategories(event.getId());
         eventsRepository.insert(event).block();
-        eventsCategoriesRepository.saveAll(eventCategories).collectList().block();
+        categoryRepository.saveAll(categories).collectList().block();
+        eventCategoriesRepository.saveAll(
+                        categories.stream().map(c -> EventCategories.from(event.getId(), c.getId())).toList())
+                .collectList().block();
 
         EventRequest request = DataMockUtils.generateEventCreationRequestRecurrent();
 
@@ -237,13 +259,13 @@ class EventsUpdateControllerIntegrationTest extends BaseIntegrationTest {
 
     private static Stream<Arguments> provideEventEntitiesAndRequest() {
         Event event = generateEventEntity();
-        List<EventCategories> eventCategories = generateEventCategories(event.getId());
+        List<Category> categories = generateEventCategories(event.getId());
         EventRequest recurrentRequest = generateEventCreationRequestRecurrent();
         EventRequest nonRecurrentRequest = generateEventCreationRequestNotRecurrent();
         return Stream.of(
-                Arguments.of(event, eventCategories, recurrentRequest),
+                Arguments.of(event, categories, recurrentRequest),
                 Arguments.of(event, List.of(), recurrentRequest),
-                Arguments.of(event, eventCategories, nonRecurrentRequest),
+                Arguments.of(event, categories, nonRecurrentRequest),
                 Arguments.of(event, List.of(), nonRecurrentRequest)
         );
     }

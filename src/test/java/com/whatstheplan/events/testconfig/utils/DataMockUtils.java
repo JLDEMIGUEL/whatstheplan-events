@@ -1,8 +1,8 @@
 package com.whatstheplan.events.testconfig.utils;
 
 import com.whatstheplan.events.model.Recurrence;
+import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
-import com.whatstheplan.events.model.entities.EventCategories;
 import com.whatstheplan.events.model.request.EventRequest;
 import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.NotNull;
@@ -85,18 +85,17 @@ public class DataMockUtils {
                 .build();
     }
 
-    public static List<EventCategories> generateEventCategories(UUID eventId) {
+    public static List<Category> generateEventCategories(UUID eventId) {
         return List.of(
                 generateEventCategory("Soccer", eventId),
                 generateEventCategory("Baseball", eventId),
                 generateEventCategory("Hiking", eventId));
     }
 
-    public static EventCategories generateEventCategory(String Soccer, UUID eventId) {
-        return EventCategories.builder()
+    public static Category generateEventCategory(String Soccer, UUID eventId) {
+        return Category.builder()
                 .id(UUID.randomUUID())
-                .activityType(Soccer)
-                .eventId(eventId)
+                .name(Soccer)
                 .isNew(true)
                 .build();
     }

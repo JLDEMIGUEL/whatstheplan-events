@@ -1,7 +1,7 @@
 package com.whatstheplan.events.testconfig.utils;
 
+import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
-import com.whatstheplan.events.model.entities.EventCategories;
 import com.whatstheplan.events.model.request.EventRequest;
 import com.whatstheplan.events.model.response.EventResponse;
 import lombok.experimental.UtilityClass;
@@ -45,7 +45,7 @@ public class AssertionUtils {
         }
     }
 
-    public static void assertEventResponse(Event eventEntity, List<EventCategories> eventCategories,
+    public static void assertEventResponse(Event eventEntity, List<Category> categories,
                                            EventResponse eventResponse) {
         assertThat(eventResponse.getId()).isNotNull();
         assertThat(eventResponse.getTitle()).isEqualTo(eventEntity.getTitle());
@@ -62,8 +62,8 @@ public class AssertionUtils {
         assertThat(eventResponse.getLastModifiedDate()).isNotNull();
 
         assertThat(eventResponse.getActivityTypes())
-                .containsAll(eventCategories.stream().map(EventCategories::getActivityType).toList());
-        assertThat(eventResponse.getActivityTypes().size()).isEqualTo(eventCategories.size());
+                .containsAll(categories.stream().map(Category::getName).toList());
+        assertThat(eventResponse.getActivityTypes().size()).isEqualTo(categories.size());
 
         assertRecurrenceEquals(parseRRule(eventEntity.getRecurrence()), eventResponse.getRecurrence());
     }
@@ -72,7 +72,7 @@ public class AssertionUtils {
             EventRequest request,
             String imageName,
             Event event,
-            List<EventCategories> eventCategories) {
+            List<Category> categories) {
         assertThat(event.getId()).isNotNull();
         assertThat(event.getTitle()).isEqualTo(request.getTitle());
         assertThat(event.getDescription()).isEqualTo(request.getDescription());
@@ -95,25 +95,18 @@ public class AssertionUtils {
             assertThat(event.getRecurrence()).isNull();
         }
 
-        assertThat(eventCategories.stream().map(EventCategories::getActivityType).toList())
+        assertThat(categories.size()).isEqualTo(request.getActivityTypes().size());
+        assertThat(categories.stream().map(Category::getName).toList())
                 .containsAll(request.getActivityTypes());
-        assertThat(eventCategories.size()).isEqualTo(request.getActivityTypes().size());
-
-        assertThat(eventCategories)
-                .allSatisfy(category -> assertThat(category.getEventId()).isEqualTo(event.getId()));
-        assertThat(eventCategories)
+        assertThat(categories)
                 .allSatisfy(category -> assertThat(category.getId()).isNotNull());
-        assertThat(eventCategories)
-                .allSatisfy(category -> assertThat(category.getCreatedDate()).isNotNull());
-        assertThat(eventCategories)
-                .allSatisfy(category -> assertThat(category.getLastModifiedDate()).isNotNull());
     }
 
     public static void assertEventEntity(
             Event expectedEvent,
             Event actualEvent,
-            List<EventCategories> expectedEventCategories,
-            List<EventCategories> actualEventCategories) {
+            List<Category> expectedCategories,
+            List<Category> actualCategories) {
         assertThat(actualEvent.getId()).isNotNull();
         assertThat(actualEvent.getTitle()).isEqualTo(expectedEvent.getTitle());
         assertThat(actualEvent.getDescription()).isEqualTo(expectedEvent.getDescription());
@@ -129,13 +122,10 @@ public class AssertionUtils {
         assertThat(actualEvent.getCreatedDate()).isNotNull();
         assertThat(actualEvent.getLastModifiedDate()).isNotNull();
 
-        assertThat(actualEventCategories)
-                .allSatisfy(category -> assertThat(category.getEventId()).isEqualTo(actualEvent.getId()));
-        assertThat(actualEventCategories)
+        assertThat(actualCategories.size()).isEqualTo(expectedCategories.size());
+        assertThat(actualCategories.stream().map(Category::getName).toList())
+                .containsAll(expectedCategories.stream().map(Category::getName).toList());
+        assertThat(actualCategories)
                 .allSatisfy(category -> assertThat(category.getId()).isNotNull());
-        assertThat(actualEventCategories)
-                .allSatisfy(category -> assertThat(category.getCreatedDate()).isNotNull());
-        assertThat(actualEventCategories)
-                .allSatisfy(category -> assertThat(category.getLastModifiedDate()).isNotNull());
     }
 }

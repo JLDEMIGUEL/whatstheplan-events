@@ -1,7 +1,7 @@
 package com.whatstheplan.events.integration;
 
+import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
-import com.whatstheplan.events.model.entities.EventCategories;
 import com.whatstheplan.events.model.response.ErrorResponse;
 import com.whatstheplan.events.testconfig.BaseIntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -35,10 +35,10 @@ class EventsDeleteControllerIntegrationTest extends BaseIntegrationTest {
     @MethodSource("provideEventEntities")
     void whenANewEventDeleteRequest_thenShouldDeleteEventFromDatabaseAndImage(
             Event event,
-            List<EventCategories> eventCategories) {
+            List<Category> categories) {
         // given
         eventsRepository.insert(event).block();
-        eventsCategoriesRepository.saveAll(eventCategories).collectList().block();
+        categoryRepository.saveAll(categories).collectList().block();
 
         mockS3DeleteObject(s3Client);
 
@@ -61,10 +61,10 @@ class EventsDeleteControllerIntegrationTest extends BaseIntegrationTest {
     @MethodSource("provideEventEntities")
     void whenANewEventDeleteRequestAndDeleteImageFails_thenShouldDeleteEventFromDatabase(
             Event event,
-            List<EventCategories> eventCategories) {
+            List<Category> categories) {
         // given
         eventsRepository.insert(event).block();
-        eventsCategoriesRepository.saveAll(eventCategories).collectList().block();
+        categoryRepository.saveAll(categories).collectList().block();
 
         given(s3Client.deleteObject(any(DeleteObjectRequest.class)))
                 .willReturn(CompletableFuture.failedFuture(new RuntimeException("Error deleting image")));
@@ -128,9 +128,9 @@ class EventsDeleteControllerIntegrationTest extends BaseIntegrationTest {
 
     private static Stream<Arguments> provideEventEntities() {
         Event event = generateEventEntity();
-        List<EventCategories> eventCategories = generateEventCategories(event.getId());
+        List<Category> categories = generateEventCategories(event.getId());
         return Stream.of(
-                Arguments.of(event, eventCategories),
+                Arguments.of(event, categories),
                 Arguments.of(event, List.of())
         );
     }

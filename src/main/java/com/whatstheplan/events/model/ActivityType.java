@@ -52,7 +52,7 @@ public enum ActivityType {
 
     private final String name;
 
-    public static ActivityType from(String name) {
+    public static ActivityType from(String name) { // TODO validate request with this
         return Arrays.stream(ActivityType.values())
                 .filter(activityType -> activityType.name.equals(name))
                 .findFirst()

@@ -1,6 +1,7 @@
 package com.whatstheplan.events.testconfig;
 
-import com.whatstheplan.events.repository.EventsCategoriesRepository;
+import com.whatstheplan.events.repository.CategoryRepository;
+import com.whatstheplan.events.repository.EventCategoriesRepository;
 import com.whatstheplan.events.repository.EventsRepository;
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.jupiter.api.AfterAll;
@@ -44,7 +45,10 @@ public class BaseIntegrationTest {
     protected EventsRepository eventsRepository;
 
     @MockitoSpyBean
-    protected EventsCategoriesRepository eventsCategoriesRepository;
+    protected CategoryRepository categoryRepository;
+
+    @MockitoSpyBean
+    protected EventCategoriesRepository eventCategoriesRepository;
 
     @Autowired
     protected WebTestClient webTestClient;
@@ -64,7 +68,8 @@ public class BaseIntegrationTest {
     @BeforeEach
     void beforeEach() {
         eventsRepository.deleteAll().block();
-        eventsCategoriesRepository.deleteAll().block();
+        categoryRepository.deleteAll().block();
+        eventCategoriesRepository.deleteAll().block();
     }
 
     @AfterAll

@@ -7,9 +7,10 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
-public interface EventsCategoriesRepository extends ReactiveCrudRepository<EventCategories, UUID> {
+public interface EventCategoriesRepository extends ReactiveCrudRepository<EventCategories, UUID> {
 
     Flux<EventCategories> findAllByEventId(UUID eventId);
 
     Mono<Void> deleteAllByEventId(UUID eventId);
+
 }

@@ -1,5 +1,6 @@
 package com.whatstheplan.events.integration;
 
+import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
 import com.whatstheplan.events.model.entities.EventCategories;
 import com.whatstheplan.events.model.response.ErrorResponse;
@@ -25,10 +26,13 @@ class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
     @MethodSource("provideEventEntities")
     void whenANewEventRetrievalRequest_thenShouldReturnOkEventResponse(
             Event event,
-            List<EventCategories> eventCategories) {
+            List<Category> categories) {
         // given
         eventsRepository.insert(event).block();
-        eventsCategoriesRepository.saveAll(eventCategories).collectList().block();
+        categoryRepository.saveAll(categories).collectList().block();
+        eventCategoriesRepository.saveAll(
+                        categories.stream().map(c -> EventCategories.from(event.getId(), c.getId())).toList())
+                .collectList().block();
 
         // when - then
         webTestClient
@@ -40,7 +44,7 @@ class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
                 .expectBodyList(EventResponse.class)
                 .hasSize(1)
                 .consumeWith(response -> {
-                    assertEventResponse(event, eventCategories, response.getResponseBody().get(0));
+                    assertEventResponse(event, categories, response.getResponseBody().get(0));
                 });
     }
 
@@ -88,9 +92,9 @@ class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
 
     private static Stream<Arguments> provideEventEntities() {
         Event event = generateEventEntity();
-        List<EventCategories> eventCategories = generateEventCategories(event.getId());
+        List<Category> categories = generateEventCategories(event.getId());
         return Stream.of(
-                Arguments.of(event, eventCategories),
+                Arguments.of(event, categories),
                 Arguments.of(event, List.of())
         );
     }

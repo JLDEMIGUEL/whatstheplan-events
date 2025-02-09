@@ -109,8 +109,7 @@ public class EventsController {
     }
 
     private void validateImage(FilePart image) {
-        String filename = image.filename();
-        if (!filename.matches("(?i).*\\.(png|jpg|jpeg)$")) {
+        if (!image.filename().matches("(?i).*\\.(png|jpg|jpeg)$")) {
             throw new FileValidationException("Invalid image format. Allowed: PNG, JPG, JPEG.");
         }
         if (image.headers().getContentLength() > 5 * 1024 * 1024) {

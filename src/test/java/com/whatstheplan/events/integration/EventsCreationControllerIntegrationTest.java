@@ -1,6 +1,7 @@
 package com.whatstheplan.events.integration;
 
 import com.whatstheplan.events.model.Recurrence;
+import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
 import com.whatstheplan.events.model.entities.EventCategories;
 import com.whatstheplan.events.model.request.EventRequest;
@@ -71,8 +72,11 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                     assertEventResponse(request, IMAGE.getFilename(), response.getResponseBody().get(0));
 
                     List<Event> events = eventsRepository.findAll().collectList().block();
-                    List<EventCategories> eventCategories = eventsCategoriesRepository.findAll().collectList().block();
-                    assertEventEntity(request, IMAGE.getFilename(), events.get(0), eventCategories);
+                    List<EventCategories> eventCategories = eventCategoriesRepository.findAll().collectList().block();
+                    List<Category> categories = categoryRepository.findAllById(
+                                    eventCategories.stream().map(EventCategories::getCategoryId).toList())
+                            .collectList().block();
+                    assertEventEntity(request, IMAGE.getFilename(), events.get(0), categories);
 
                     verify(s3Client, times(1))
                             .putObject(any(PutObjectRequest.class), any(AsyncRequestBody.class));

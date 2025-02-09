@@ -1,8 +1,8 @@
 package com.whatstheplan.events.model.response;
 
 import com.whatstheplan.events.model.Recurrence;
+import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
-import com.whatstheplan.events.model.entities.EventCategories;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,7 +37,7 @@ public class EventResponse {
     private Instant lastModifiedDate;
     private List<String> activityTypes;
 
-    public static EventResponse fromEntity(Event event, List<EventCategories> activityTypes) {
+    public static EventResponse fromEntity(Event event, List<Category> activityTypes) {
         return EventResponse.builder()
                 .id(event.getId())
                 .title(event.getTitle())
@@ -53,7 +53,7 @@ public class EventResponse {
                 .organizerUsername("") //TODO
                 .createdDate(event.getCreatedDate())
                 .lastModifiedDate(event.getLastModifiedDate())
-                .activityTypes(activityTypes.stream().map(EventCategories::getActivityType).toList())
+                .activityTypes(activityTypes.stream().map(Category::getName).toList())
                 .build();
     }
 }
