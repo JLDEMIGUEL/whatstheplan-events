@@ -70,4 +70,10 @@ dependencyManagement {
 
 tasks.named('test') {
     useJUnitPlatform()
+    def agentJar = configurations.testRuntimeClasspath.find { it.name.contains("byte-buddy-agent") }
+    if (agentJar) {
+        jvmArgs "-javaagent:${agentJar.absolutePath}"
+    } else {
+        throw new GradleException("byte-buddy-agent JAR not found in test runtime classpath")
+    }
 }
