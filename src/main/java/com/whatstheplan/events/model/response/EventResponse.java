@@ -27,7 +27,7 @@ public class EventResponse {
     private LocalDateTime dateTime;
     private Duration duration;
     private String location;
-    private int capacity;
+    private Integer capacity;
     private String imageKey;
     private Recurrence recurrence;
     private UUID organizerId;

@@ -7,7 +7,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
-public interface EventsRepository extends ReactiveCrudRepository<Event, UUID> {
+public interface EventsRepository extends ReactiveCrudRepository<Event, UUID>, CustomEventRepository {
 
     @Query("""
             INSERT INTO event (

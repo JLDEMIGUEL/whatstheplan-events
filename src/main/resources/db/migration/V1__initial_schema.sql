@@ -40,3 +40,4 @@ CREATE TABLE IF NOT EXISTS event_categories
     CONSTRAINT unique_event_category UNIQUE (event_id, category_id)
 );
 CREATE INDEX idx_mapping_category_id ON event_categories (category_id);
+CREATE INDEX idx_event_categories_event ON event_categories (event_id);

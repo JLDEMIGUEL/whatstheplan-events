@@ -128,7 +128,7 @@ class EventsDeleteControllerIntegrationTest extends BaseIntegrationTest {
 
     private static Stream<Arguments> provideEventEntities() {
         Event event = generateEventEntity();
-        List<Category> categories = generateEventCategories(event.getId());
+        List<Category> categories = generateEventCategories();
         return Stream.of(
                 Arguments.of(event, categories),
                 Arguments.of(event, List.of())

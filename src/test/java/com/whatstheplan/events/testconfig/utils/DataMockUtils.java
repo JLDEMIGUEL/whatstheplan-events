@@ -23,13 +23,15 @@ import static net.fortuna.ical4j.transform.recurrence.Frequency.WEEKLY;
 @UtilityClass
 public class DataMockUtils {
 
+    public static LocalDateTime TODAY = LocalDateTime.now().withNano(0).withSecond(0).withMinute(0);
+
     public static EventRequest generateEventCreationRequestRecurrent() {
         return generateEventCreationRequest(
                 Recurrence.builder()
                         .frequency(DAILY.name())
                         .interval(1)
                         .byDays(List.of(MO.name(), TH.name()))
-                        .until(LocalDateTime.now().plusYears(1).withNano(0))
+                        .until(TODAY.plusYears(1).withNano(0))
                         .build()
         );
     }
@@ -42,7 +44,7 @@ public class DataMockUtils {
         return EventRequest.builder()
                 .title("Test title")
                 .description("Test description")
-                .dateTime(LocalDateTime.now().plusDays(3).withNano(0))
+                .dateTime(TODAY.plusDays(3).withNano(0))
                 .duration(Duration.ofHours(1))
                 .location("Test location")
                 .capacity(10)
@@ -55,7 +57,7 @@ public class DataMockUtils {
         return EventRequest.builder()
                 .title("Updated test title")
                 .description("Updated test description")
-                .dateTime(LocalDateTime.now().plusDays(5).withNano(0))
+                .dateTime(TODAY.plusDays(5).withNano(0))
                 .duration(Duration.ofHours(2))
                 .location("Updated test location")
                 .capacity(10)
@@ -63,7 +65,7 @@ public class DataMockUtils {
                         .frequency(WEEKLY.name())
                         .interval(2)
                         .byDays(List.of(TU.name()))
-                        .until(LocalDateTime.now().plusYears(3).withNano(0))
+                        .until(TODAY.plusYears(3).withNano(0))
                         .build())
                 .activityTypes(List.of("Climbing", "Outdoors", "Food & Dining"))
                 .build();
@@ -74,7 +76,7 @@ public class DataMockUtils {
                 .id(UUID.randomUUID())
                 .title("Test title")
                 .description("Test description")
-                .dateTime(LocalDateTime.now().plusDays(3).withNano(0))
+                .dateTime(TODAY.plusDays(3).withNano(0))
                 .duration(Duration.ofHours(1))
                 .location("Test location")
                 .capacity(10)
@@ -85,17 +87,17 @@ public class DataMockUtils {
                 .build();
     }
 
-    public static List<Category> generateEventCategories(UUID eventId) {
+    public static List<Category> generateEventCategories() {
         return List.of(
-                generateEventCategory("Soccer", eventId),
-                generateEventCategory("Baseball", eventId),
-                generateEventCategory("Hiking", eventId));
+                generateEventCategory("Soccer"),
+                generateEventCategory("Baseball"),
+                generateEventCategory("Hiking"));
     }
 
-    public static Category generateEventCategory(String Soccer, UUID eventId) {
+    public static Category generateEventCategory(String name) {
         return Category.builder()
                 .id(UUID.randomUUID())
-                .name(Soccer)
+                .name(name)
                 .isNew(true)
                 .build();
     }

@@ -23,13 +23,13 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static com.whatstheplan.events.testconfig.utils.AssertionUtils.assertEventEntity;
 import static com.whatstheplan.events.testconfig.utils.AssertionUtils.assertEventResponse;
+import static com.whatstheplan.events.testconfig.utils.DataMockUtils.TODAY;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventCreationRequestNotRecurrent;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventCreationRequestRecurrent;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateImage;
@@ -180,7 +180,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
         EventRequest validRequest = EventRequest.builder()
                 .title("Valid Title")
                 .description("Valid Description")
-                .dateTime(LocalDateTime.now().plusDays(2))
+                .dateTime(TODAY.plusDays(2))
                 .duration(Duration.ofHours(2))
                 .location("Valid Location")
                 .capacity(10)
@@ -217,7 +217,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 // --- DateTime is in the past ---
                 arguments(
                         generateEventCreationRequestRecurrent().toBuilder()
-                                .dateTime(LocalDateTime.now().minusDays(1))
+                                .dateTime(TODAY.minusDays(1))
                                 .build(),
                         validImage,
                         List.of("Event date must be in the future.")
@@ -289,7 +289,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                                         .frequency("DAILY")
                                         .interval(1)
                                         .byDays(List.of("MO"))
-                                        .until(LocalDateTime.now().plusDays(10))
+                                        .until(TODAY.plusDays(10))
                                         .count(5)
                                         .build())
                                 .build(),
@@ -319,7 +319,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                                         .frequency("INVALID")            // Invalid recurrence frequency
                                         .interval(0)                     // Recurrence interval <= 0
                                         .byDays(Collections.emptyList()) // Recurrence byDays is empty
-                                        .until(LocalDateTime.now())       // Both 'until' and 'count' set
+                                        .until(TODAY)       // Both 'until' and 'count' set
                                         .count(5)
                                         .build())
                                 .build(),
