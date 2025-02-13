@@ -73,14 +73,14 @@ class EventsUpdateControllerIntegrationTest extends BaseIntegrationTest {
                 .expectBodyList(EventResponse.class)
                 .hasSize(1)
                 .consumeWith(response -> {
-                    assertEventResponse(request, event.getImageKey(), response.getResponseBody().get(0));
+                    assertEventResponse(request, event.getImageKey(), response.getResponseBody().get(0), event.getRegistrations());
 
                     List<Event> events = eventsRepository.findAll().collectList().block();
                     List<EventCategories> eventCategories = eventCategoriesRepository.findAll().collectList().block();
                     List<Category> categoryEntities = categoryRepository.findAllById(
                                     eventCategories.stream().map(EventCategories::getCategoryId).toList())
                             .collectList().block();
-                    assertEventEntity(request, event.getImageKey(), events.get(0), categoryEntities);
+                    assertEventEntity(request, event.getImageKey(), events.get(0), categoryEntities, event.getRegistrations());
 
                     verify(s3Client, times(0))
                             .putObject(any(PutObjectRequest.class), any(AsyncRequestBody.class));
@@ -118,14 +118,14 @@ class EventsUpdateControllerIntegrationTest extends BaseIntegrationTest {
                 .expectBodyList(EventResponse.class)
                 .hasSize(1)
                 .consumeWith(response -> {
-                    assertEventResponse(request, NEW_IMAGE.getFilename(), response.getResponseBody().get(0));
+                    assertEventResponse(request, NEW_IMAGE.getFilename(), response.getResponseBody().get(0), event.getRegistrations());
 
                     List<Event> events = eventsRepository.findAll().collectList().block();
                     List<EventCategories> eventCategories = eventCategoriesRepository.findAll().collectList().block();
                     List<Category> categoryEntities = categoryRepository.findAllById(
                                     eventCategories.stream().map(EventCategories::getCategoryId).toList())
                             .collectList().block();
-                    assertEventEntity(request, NEW_IMAGE.getFilename(), events.get(0), categoryEntities);
+                    assertEventEntity(request, NEW_IMAGE.getFilename(), events.get(0), categoryEntities, event.getRegistrations());
 
                     verify(s3Client, times(1))
                             .putObject(any(PutObjectRequest.class), any(AsyncRequestBody.class));

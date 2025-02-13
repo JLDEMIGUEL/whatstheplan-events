@@ -26,7 +26,8 @@ public class SecurityConfig {
         http
                 .authorizeExchange(auth -> auth
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .pathMatchers("/events", "/events/*").hasRole("user")
+                        .pathMatchers("/events", "/events/*", "/events/registration", "/events/registration/*")
+                        .hasRole("user")
                         .pathMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .anyExchange().authenticated())
                 .cors(withDefaults())

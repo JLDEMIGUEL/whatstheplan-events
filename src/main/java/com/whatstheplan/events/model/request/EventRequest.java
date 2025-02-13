@@ -57,13 +57,14 @@ public class EventRequest {
                         .imageKey(imageKey)
                         .organizerId(userId)
                         .isNew(true)
+                        .registrations(0)
                         .build());
     }
 
-    public Mono<Event> toUpdateEntity(UUID eventId, String imageKey) {
+    public Mono<Event> toUpdateEntity(Event event, String imageKey) {
         return getUserId()
                 .map(userId -> Event.builder()
-                        .id(eventId)
+                        .id(event.getId())
                         .title(title)
                         .description(description)
                         .dateTime(dateTime)
@@ -73,6 +74,7 @@ public class EventRequest {
                         .imageKey(imageKey)
                         .organizerId(userId)
                         .isNew(false)
+                        .registrations(event.getRegistrations())
                         .build());
     }
 }

@@ -94,7 +94,7 @@ public class EventService {
     }
 
     private Mono<EventResponse> updateJustEvent(Event event, EventRequest request, String imageKey) {
-        return request.toUpdateEntity(event.getId(), imageKey)
+        return request.toUpdateEntity(event, imageKey)
                 .doOnSuccess(entity -> log.info("Updating event with data: {}", entity))
                 .flatMap(eventsRepository::update)
                 .doOnSuccess(updatedEvent -> log.info("Event updated in repository with ID: {}", updatedEvent.getId()))

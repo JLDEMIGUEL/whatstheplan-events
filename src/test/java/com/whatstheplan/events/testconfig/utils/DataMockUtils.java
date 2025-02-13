@@ -54,6 +54,7 @@ public class DataMockUtils {
                 .capacity(10)
                 .imageKey("image.webp")
                 .organizerId(USER_ID)
+                .registrations(5)
                 .isNew(true)
                 .build();
     }

@@ -20,6 +20,7 @@ public interface EventsRepository extends ReactiveCrudRepository<Event, UUID>, C
                 capacity, 
                 image_key, 
                 organizer_id, 
+                registrations, 
                 created_date, 
                 last_modified_date
             ) VALUES (
@@ -32,6 +33,7 @@ public interface EventsRepository extends ReactiveCrudRepository<Event, UUID>, C
                 :#{#event.capacity}, 
                 :#{#event.imageKey}, 
                 :#{#event.organizerId}, 
+                :#{#event.registrations}, 
                 :#{#event.createdDate}, 
                 :#{#event.lastModifiedDate}
             )
@@ -55,4 +57,7 @@ public interface EventsRepository extends ReactiveCrudRepository<Event, UUID>, C
             RETURNING *
             """)
     Mono<Event> update(Event event);
+
+    @Query("UPDATE event SET registrations = registrations + 1 WHERE id = :eventId RETURNING *")
+    Mono<Event> incrementRegistrations(UUID eventId);
 }

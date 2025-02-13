@@ -44,7 +44,7 @@ class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
                 .expectBodyList(EventResponse.class)
                 .hasSize(1)
                 .consumeWith(response -> {
-                    assertEventResponse(event, categories, response.getResponseBody().get(0));
+                    assertEventResponse(event, categories, response.getResponseBody().get(0), event.getRegistrations());
                 });
     }
 

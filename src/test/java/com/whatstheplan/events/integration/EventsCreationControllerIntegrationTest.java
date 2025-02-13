@@ -66,14 +66,14 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 .expectBodyList(EventResponse.class)
                 .hasSize(1)
                 .consumeWith(response -> {
-                    assertEventResponse(request, IMAGE.getFilename(), response.getResponseBody().get(0));
+                    assertEventResponse(request, IMAGE.getFilename(), response.getResponseBody().get(0), 0);
 
                     List<Event> events = eventsRepository.findAll().collectList().block();
                     List<EventCategories> eventCategories = eventCategoriesRepository.findAll().collectList().block();
                     List<Category> categories = categoryRepository.findAllById(
                                     eventCategories.stream().map(EventCategories::getCategoryId).toList())
                             .collectList().block();
-                    assertEventEntity(request, IMAGE.getFilename(), events.get(0), categories);
+                    assertEventEntity(request, IMAGE.getFilename(), events.get(0), categories, 0);
 
                     verify(s3Client, times(1))
                             .putObject(any(PutObjectRequest.class), any(AsyncRequestBody.class));

@@ -17,7 +17,8 @@ public class AssertionUtils {
     public static void assertEventResponse(
             EventRequest request,
             String imageName,
-            EventResponse eventResponse) {
+            EventResponse eventResponse,
+            Integer registrations) {
         assertThat(eventResponse.getId()).isNotNull();
         assertThat(eventResponse.getTitle()).isEqualTo(request.getTitle());
         assertThat(eventResponse.getDescription()).isEqualTo(request.getDescription());
@@ -31,13 +32,14 @@ public class AssertionUtils {
         //assertThat(eventResponse.getOrganizerEmail()).isEqualTo(null); TODO
         assertThat(eventResponse.getCreatedDate()).isNotNull();
         assertThat(eventResponse.getLastModifiedDate()).isNotNull();
+        assertThat(eventResponse.getRegistrations()).isEqualTo(registrations);
 
         assertThat(eventResponse.getActivityTypes()).containsAll(request.getActivityTypes());
         assertThat(eventResponse.getActivityTypes().size()).isEqualTo(request.getActivityTypes().size());
     }
 
     public static void assertEventResponse(Event eventEntity, List<Category> categories,
-                                           EventResponse eventResponse) {
+                                           EventResponse eventResponse, Integer registrations) {
         assertThat(eventResponse.getId()).isNotNull();
         assertThat(eventResponse.getTitle()).isEqualTo(eventEntity.getTitle());
         assertThat(eventResponse.getDescription()).isEqualTo(eventEntity.getDescription());
@@ -51,6 +53,8 @@ public class AssertionUtils {
         //assertThat(eventResponse.getOrganizerEmail()).isEqualTo(null); TODO
         assertThat(eventResponse.getCreatedDate()).isNotNull();
         assertThat(eventResponse.getLastModifiedDate()).isNotNull();
+        assertThat(eventResponse.getRegistrations()).isEqualTo(registrations);
+
 
         assertThat(eventResponse.getActivityTypes())
                 .containsAll(categories.stream().map(Category::getName).toList());
@@ -61,7 +65,8 @@ public class AssertionUtils {
             EventRequest request,
             String imageName,
             Event event,
-            List<Category> categories) {
+            List<Category> categories,
+            Integer registrations) {
         assertThat(event.getId()).isNotNull();
         assertThat(event.getTitle()).isEqualTo(request.getTitle());
         assertThat(event.getDescription()).isEqualTo(request.getDescription());
@@ -75,6 +80,7 @@ public class AssertionUtils {
         //assertThat(event.getOrganizerEmail()).isEqualTo(null); TODO
         assertThat(event.getCreatedDate()).isNotNull();
         assertThat(event.getLastModifiedDate()).isNotNull();
+        assertThat(event.getRegistrations()).isEqualTo(registrations);
 
         assertThat(categories.size()).isEqualTo(request.getActivityTypes().size());
         assertThat(categories.stream().map(Category::getName).toList())
@@ -101,6 +107,7 @@ public class AssertionUtils {
         //assertThat(actualEvent.getOrganizerEmail()).isEqualTo(null); TODO
         assertThat(actualEvent.getCreatedDate()).isNotNull();
         assertThat(actualEvent.getLastModifiedDate()).isNotNull();
+        assertThat(actualEvent.getRegistrations()).isEqualTo(expectedEvent.getRegistrations());
 
         assertThat(actualCategories.size()).isEqualTo(expectedCategories.size());
         assertThat(actualCategories.stream().map(Category::getName).toList())

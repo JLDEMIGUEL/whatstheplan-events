@@ -1,5 +1,6 @@
 package com.whatstheplan.events.controller;
 
+import com.whatstheplan.events.exceptions.EventFullException;
 import com.whatstheplan.events.exceptions.EventNotFoundException;
 import com.whatstheplan.events.exceptions.FileValidationException;
 import com.whatstheplan.events.exceptions.UploadImageToS3Exception;
@@ -35,6 +36,10 @@ public class EventsControllerAdvice {
         return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
     }
 
+    @ExceptionHandler(EventFullException.class)
+    public ResponseEntity<ErrorResponse> handleEventFullException(EventFullException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
+    }
 
     @ExceptionHandler(ServerWebInputException.class)
     public ResponseEntity<ErrorResponse> handleServerWebInputException(ServerWebInputException ex) {

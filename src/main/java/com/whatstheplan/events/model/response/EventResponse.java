@@ -32,6 +32,7 @@ public class EventResponse {
     private Instant createdDate;
     private Instant lastModifiedDate;
     private List<String> activityTypes;
+    private Integer registrations;
 
     public static EventResponse fromEntity(Event event, List<Category> activityTypes) {
         return EventResponse.builder()
@@ -49,6 +50,7 @@ public class EventResponse {
                 .createdDate(event.getCreatedDate())
                 .lastModifiedDate(event.getLastModifiedDate())
                 .activityTypes(activityTypes.stream().map(Category::getName).toList())
+                .registrations(event.getRegistrations())
                 .build();
     }
 }
