@@ -1,5 +1,6 @@
 package com.whatstheplan.events.controller;
 
+import com.whatstheplan.events.exceptions.DuplicateRegistrationException;
 import com.whatstheplan.events.exceptions.EventFullException;
 import com.whatstheplan.events.exceptions.EventNotFoundException;
 import com.whatstheplan.events.exceptions.FileValidationException;
@@ -38,6 +39,11 @@ public class EventsControllerAdvice {
 
     @ExceptionHandler(EventFullException.class)
     public ResponseEntity<ErrorResponse> handleEventFullException(EventFullException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(DuplicateRegistrationException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateRegistrationException(DuplicateRegistrationException ex) {
         return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
     }
 

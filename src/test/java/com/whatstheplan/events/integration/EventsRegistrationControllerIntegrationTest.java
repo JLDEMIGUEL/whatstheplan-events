@@ -1,17 +1,13 @@
 package com.whatstheplan.events.integration;
 
-import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
-import com.whatstheplan.events.model.entities.EventCategories;
 import com.whatstheplan.events.model.entities.Registration;
 import com.whatstheplan.events.model.response.ErrorResponse;
 import com.whatstheplan.events.testconfig.BaseIntegrationTest;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
-import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventCategories;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventEntity;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,12 +17,7 @@ class EventsRegistrationControllerIntegrationTest extends BaseIntegrationTest {
     void whenANewEventRegistrationRequest_thenShouldReturnOkEventResponse() {
         // given
         Event event = generateEventEntity();
-        List<Category> categories = generateEventCategories();
         eventsRepository.insert(event).block();
-        categoryRepository.saveAll(categories).collectList().block();
-        eventCategoriesRepository.saveAll(
-                        categories.stream().map(c -> EventCategories.from(event.getId(), c.getId())).toList())
-                .collectList().block();
 
         // when - then
         webTestClient
@@ -50,14 +41,9 @@ class EventsRegistrationControllerIntegrationTest extends BaseIntegrationTest {
     void whenANewEventRegistrationRequestOnAFullEvent_thenShouldReturnBadRequest() {
         // given
         Event event = generateEventEntity();
-        List<Category> categories = generateEventCategories();
         event.setRegistrations(event.getCapacity());
 
         eventsRepository.insert(event).block();
-        categoryRepository.saveAll(categories).collectList().block();
-        eventCategoriesRepository.saveAll(
-                        categories.stream().map(c -> EventCategories.from(event.getId(), c.getId())).toList())
-                .collectList().block();
 
         // when - then
         webTestClient
@@ -74,6 +60,40 @@ class EventsRegistrationControllerIntegrationTest extends BaseIntegrationTest {
                             .isEqualTo("The event has reached its maximum capacity.");
 
                     assertThat(registrationRepository.findAll().hasElements().block()).isFalse();
+                });
+    }
+
+    @Test
+    void whenANewEventRegistrationRequestOnAlreadyRegisteredEvent_thenShouldReturnBadRequest() {
+        // given
+        Event event = generateEventEntity();
+
+        eventsRepository.insert(event).block();
+        registrationRepository.save(Registration.builder()
+                .id(UUID.randomUUID())
+                .userId(USER_ID)
+                .eventId(event.getId())
+                .isNew(true)
+                .build()).block();
+
+        // when - then
+        webTestClient
+                .mutateWith(JWT)
+                .post()
+                .uri("/events/registration/" + event.getId())
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBodyList(ErrorResponse.class)
+                .hasSize(1)
+                .consumeWith(response -> {
+                    ErrorResponse errorResponse = response.getResponseBody().get(0);
+                    assertThat(errorResponse.getReason())
+                            .isEqualTo("User already registered");
+
+                    assertThat(registrationRepository.findAll().collectList().block()).hasSize(1);
+
+                    Event savedEvent = eventsRepository.findById(event.getId()).block();
+                    assertThat(savedEvent.getRegistrations()).isEqualTo(event.getRegistrations());
                 });
     }
 

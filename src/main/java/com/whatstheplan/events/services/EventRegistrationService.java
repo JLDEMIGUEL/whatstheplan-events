@@ -1,11 +1,13 @@
 package com.whatstheplan.events.services;
 
+import com.whatstheplan.events.exceptions.DuplicateRegistrationException;
 import com.whatstheplan.events.exceptions.EventFullException;
 import com.whatstheplan.events.model.entities.Registration;
 import com.whatstheplan.events.repository.EventsRepository;
 import com.whatstheplan.events.repository.RegistrationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -33,6 +35,8 @@ public class EventRegistrationService {
                                         .eventId(eventId)
                                         .isNew(true)
                                         .build())
+                        .onErrorResume(DuplicateKeyException.class, e ->
+                                Mono.error(new DuplicateRegistrationException("User already registered")))
                         .doOnSuccess(r -> log.info("Successfully saved registration: {}", r))
                         .then(eventsRepository.incrementRegistrations(eventId))
                         .doOnSuccess(e -> log.info("Updated event {} registrations to {}", eventId, e.getRegistrations()))
