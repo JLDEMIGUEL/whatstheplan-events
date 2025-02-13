@@ -1,6 +1,5 @@
 package com.whatstheplan.events.model.response;
 
-import com.whatstheplan.events.model.Recurrence;
 import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
 import lombok.AllArgsConstructor;
@@ -13,8 +12,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-
-import static com.whatstheplan.events.utils.RecurrenceUtils.parseRRule;
 
 @Data
 @SuperBuilder
@@ -29,7 +26,6 @@ public class EventResponse {
     private String location;
     private Integer capacity;
     private String imageKey;
-    private Recurrence recurrence;
     private UUID organizerId;
     private String organizerUsername;
     private String organizerEmail;
@@ -47,7 +43,6 @@ public class EventResponse {
                 .location(event.getLocation())
                 .capacity(event.getCapacity())
                 .imageKey(event.getImageKey())
-                .recurrence(parseRRule(event.getRecurrence()))
                 .organizerId(event.getOrganizerId())
                 .organizerEmail("") //TODO
                 .organizerUsername("") //TODO

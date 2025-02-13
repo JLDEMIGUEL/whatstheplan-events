@@ -19,7 +19,6 @@ public interface EventsRepository extends ReactiveCrudRepository<Event, UUID>, C
                 location, 
                 capacity, 
                 image_key, 
-                recurrence, 
                 organizer_id, 
                 created_date, 
                 last_modified_date
@@ -32,7 +31,6 @@ public interface EventsRepository extends ReactiveCrudRepository<Event, UUID>, C
                 :#{#event.location}, 
                 :#{#event.capacity}, 
                 :#{#event.imageKey}, 
-                :#{#event.recurrence}, 
                 :#{#event.organizerId}, 
                 :#{#event.createdDate}, 
                 :#{#event.lastModifiedDate}
@@ -51,7 +49,6 @@ public interface EventsRepository extends ReactiveCrudRepository<Event, UUID>, C
                 location = :#{#event.location},
                 capacity = :#{#event.capacity},
                 image_key = :#{#event.imageKey},
-                recurrence = :#{#event.recurrence},
                 organizer_id = :#{#event.organizerId},
                 last_modified_date = :#{#event.lastModifiedDate}
             WHERE id = :#{#event.id}

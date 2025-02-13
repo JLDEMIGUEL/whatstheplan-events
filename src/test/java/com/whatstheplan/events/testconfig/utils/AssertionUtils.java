@@ -6,12 +6,9 @@ import com.whatstheplan.events.model.request.EventRequest;
 import com.whatstheplan.events.model.response.EventResponse;
 import lombok.experimental.UtilityClass;
 
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static com.whatstheplan.events.testconfig.BaseIntegrationTest.USER_ID;
-import static com.whatstheplan.events.utils.RecurrenceUtils.parseRRule;
-import static com.whatstheplan.events.utils.RecurrenceUtilsTest.assertRecurrenceEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @UtilityClass
@@ -37,12 +34,6 @@ public class AssertionUtils {
 
         assertThat(eventResponse.getActivityTypes()).containsAll(request.getActivityTypes());
         assertThat(eventResponse.getActivityTypes().size()).isEqualTo(request.getActivityTypes().size());
-
-        if (request.getRecurrence() != null) {
-            assertRecurrenceEquals(request.getRecurrence(), eventResponse.getRecurrence());
-        } else {
-            assertThat(eventResponse.getRecurrence()).isNull();
-        }
     }
 
     public static void assertEventResponse(Event eventEntity, List<Category> categories,
@@ -64,8 +55,6 @@ public class AssertionUtils {
         assertThat(eventResponse.getActivityTypes())
                 .containsAll(categories.stream().map(Category::getName).toList());
         assertThat(eventResponse.getActivityTypes().size()).isEqualTo(categories.size());
-
-        assertRecurrenceEquals(parseRRule(eventEntity.getRecurrence()), eventResponse.getRecurrence());
     }
 
     public static void assertEventEntity(
@@ -87,14 +76,6 @@ public class AssertionUtils {
         assertThat(event.getCreatedDate()).isNotNull();
         assertThat(event.getLastModifiedDate()).isNotNull();
 
-        if (request.getRecurrence() != null) {
-            assertThat(event.getRecurrence()).contains("FREQ=" + request.getRecurrence().getFrequency(),
-                    "UNTIL=" + request.getRecurrence().getUntil().format(DateTimeFormatter.ofPattern("yyyyMMdd")),
-                    "BYDAY=" + String.join(",", request.getRecurrence().getByDays()));
-        } else {
-            assertThat(event.getRecurrence()).isNull();
-        }
-
         assertThat(categories.size()).isEqualTo(request.getActivityTypes().size());
         assertThat(categories.stream().map(Category::getName).toList())
                 .containsAll(request.getActivityTypes());
@@ -115,7 +96,6 @@ public class AssertionUtils {
         assertThat(actualEvent.getLocation()).isEqualTo(expectedEvent.getLocation());
         assertThat(actualEvent.getCapacity()).isEqualTo(expectedEvent.getCapacity());
         assertThat(actualEvent.getImageKey()).contains(expectedEvent.getImageKey());
-        assertThat(actualEvent.getRecurrence()).isEqualTo(expectedEvent.getRecurrence());
         assertThat(actualEvent.getOrganizerId()).isEqualTo(USER_ID);
         //assertThat(actualEvent.getOrganizerUsername()).isEqualTo(null); TODO
         //assertThat(actualEvent.getOrganizerEmail()).isEqualTo(null); TODO

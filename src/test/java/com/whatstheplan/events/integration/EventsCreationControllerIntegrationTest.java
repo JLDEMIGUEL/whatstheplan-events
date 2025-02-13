@@ -1,6 +1,5 @@
 package com.whatstheplan.events.integration;
 
-import com.whatstheplan.events.model.Recurrence;
 import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
 import com.whatstheplan.events.model.entities.EventCategories;
@@ -23,15 +22,13 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static com.whatstheplan.events.testconfig.utils.AssertionUtils.assertEventEntity;
 import static com.whatstheplan.events.testconfig.utils.AssertionUtils.assertEventResponse;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.TODAY;
-import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventCreationRequestNotRecurrent;
-import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventCreationRequestRecurrent;
+import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventCreationRequest;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateImage;
 import static com.whatstheplan.events.testconfig.utils.S3MockUtils.mockS3DeleteObject;
 import static com.whatstheplan.events.testconfig.utils.S3MockUtils.mockS3PutObject;
@@ -86,7 +83,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
     @Test
     void whenANewEventCreationRequestFailsToSaveInDatabase_thenWillDeleteImageAndReturnBadRequest() {
         // given
-        EventRequest request = generateEventCreationRequestRecurrent();
+        EventRequest request = generateEventCreationRequest();
 
         mockS3PutObject(s3Client);
         mockS3DeleteObject(s3Client);
@@ -145,7 +142,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
     @Test
     void whenANewEventCreationRequestWithMissingRole_thenWillReturnUnauthorized() {
         // given
-        EventRequest request = generateEventCreationRequestRecurrent();
+        EventRequest request = generateEventCreationRequest();
 
         // when - then
         webTestClient
@@ -171,8 +168,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
 
     public static Stream<Arguments> provideEventRequests() {
         return Stream.of(
-                Arguments.of(generateEventCreationRequestNotRecurrent()),
-                Arguments.of(generateEventCreationRequestRecurrent())
+                Arguments.of(generateEventCreationRequest())
         );
     }
 
@@ -184,7 +180,6 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 .duration(Duration.ofHours(2))
                 .location("Valid Location")
                 .capacity(10)
-                .recurrence(null)
                 .build();
 
         ByteArrayResource validImage = generateImage(new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47}, "valid.png");
@@ -192,7 +187,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
         return Stream.of(
                 // --- Title is blank ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        generateEventCreationRequest().toBuilder()
                                 .title("")
                                 .build(),
                         validImage,
@@ -200,7 +195,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- Description is blank ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        generateEventCreationRequest().toBuilder()
                                 .description("")
                                 .build(),
                         validImage,
@@ -208,7 +203,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- DateTime is null ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        generateEventCreationRequest().toBuilder()
                                 .dateTime(null)
                                 .build(),
                         validImage,
@@ -216,7 +211,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- DateTime is in the past ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        generateEventCreationRequest().toBuilder()
                                 .dateTime(TODAY.minusDays(1))
                                 .build(),
                         validImage,
@@ -224,7 +219,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- Duration is null ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        generateEventCreationRequest().toBuilder()
                                 .duration(null)
                                 .build(),
                         validImage,
@@ -232,7 +227,7 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- Location is blank ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        generateEventCreationRequest().toBuilder()
                                 .location("")
                                 .build(),
                         validImage,
@@ -240,61 +235,11 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- Capacity is < 1 ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        generateEventCreationRequest().toBuilder()
                                 .capacity(0)
                                 .build(),
                         validImage,
                         List.of("Capacity must be at least 1.")
-                ),
-                // --- Invalid recurrence frequency ---
-                arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
-                                .recurrence(Recurrence.builder()
-                                        .frequency("HOURLY") // invalid => violates pattern
-                                        .interval(1)
-                                        .byDays(List.of("MO"))
-                                        .build())
-                                .build(),
-                        validImage,
-                        List.of("Invalid recurrence frequency.")
-                ),
-                // --- Recurrence interval <= 0 ---
-                arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
-                                .recurrence(Recurrence.builder()
-                                        .frequency("DAILY")
-                                        .interval(0)
-                                        .byDays(List.of("MO"))
-                                        .build())
-                                .build(),
-                        validImage,
-                        List.of("Interval must be a positive number.")
-                ),
-                // --- Recurrence byDays is empty ---
-                arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
-                                .recurrence(Recurrence.builder()
-                                        .frequency("DAILY")
-                                        .interval(1)
-                                        .byDays(List.of()) // violates @Size(min=1)
-                                        .build())
-                                .build(),
-                        validImage,
-                        List.of("At least one day must be specified.")
-                ),
-                // --- Recurrence until + count both set ---
-                arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
-                                .recurrence(Recurrence.builder()
-                                        .frequency("DAILY")
-                                        .interval(1)
-                                        .byDays(List.of("MO"))
-                                        .until(TODAY.plusDays(10))
-                                        .count(5)
-                                        .build())
-                                .build(),
-                        validImage,
-                        List.of("Only one of 'until' or 'count' can be specified.")
                 ),
                 // --- Invalid image extension (GIF) ---
                 arguments(
@@ -310,29 +255,18 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 // --- Multiple validation errors ---
                 arguments(
-                        generateEventCreationRequestRecurrent().toBuilder()
+                        generateEventCreationRequest().toBuilder()
                                 .title("")                          // Title is blank
                                 .description("")                    // Description is blank
                                 .dateTime(null)                     // DateTime is null
                                 .capacity(0)                        // Capacity is less than 1
-                                .recurrence(Recurrence.builder()
-                                        .frequency("INVALID")            // Invalid recurrence frequency
-                                        .interval(0)                     // Recurrence interval <= 0
-                                        .byDays(Collections.emptyList()) // Recurrence byDays is empty
-                                        .until(TODAY)       // Both 'until' and 'count' set
-                                        .count(5)
-                                        .build())
                                 .build(),
                         validImage,
                         List.of(
                                 "Title is required.",
                                 "Description is required.",
                                 "Date and time must be specified.",
-                                "Capacity must be at least 1.",
-                                "Invalid recurrence frequency.",
-                                "Interval must be a positive number.",
-                                "At least one day must be specified.",
-                                "Only one of 'until' or 'count' can be specified."
+                                "Capacity must be at least 1."
                         )
                 )
         );

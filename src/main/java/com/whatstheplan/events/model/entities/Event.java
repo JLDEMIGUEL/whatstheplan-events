@@ -29,5 +29,4 @@ public class Event extends AbstractAuditingEntity<UUID> {
     private Integer capacity;
     private String imageKey;
     private UUID organizerId;
-    private String recurrence;
 }

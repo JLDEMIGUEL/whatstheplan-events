@@ -17,8 +17,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-import static com.whatstheplan.events.utils.RecurrenceUtils.parseRRule;
-
 public class CustomEventRepositoryImpl implements CustomEventRepository {
     private final DatabaseClient databaseClient;
 
@@ -67,9 +65,9 @@ public class CustomEventRepositoryImpl implements CustomEventRepository {
             params.put("categories", Parameters.in(filter.getActivityTypes()));
         }
 
-        sql.append(" AND (e.recurrence IS NOT NULL OR e.date_time >= :after)");
+        sql.append(" AND e.date_time >= :after");
         params.put("after", filter.getDateTimeFrom());
-        sql.append(" AND (e.recurrence IS NOT NULL OR e.date_time <= :before)");
+        sql.append(" AND e.date_time <= :before");
         params.put("before", filter.getDateTimeTo());
 
         sql.append(" GROUP BY e.id");
@@ -88,7 +86,6 @@ public class CustomEventRepositoryImpl implements CustomEventRepository {
                             .capacity(row.get("capacity", Integer.class))
                             .imageKey(row.get("image_key", String.class))
                             .organizerId(row.get("organizer_id", UUID.class))
-                            .recurrence(parseRRule(row.get("recurrence", String.class)))
                             .createdDate(row.get("created_date", Instant.class))
                             .lastModifiedDate(row.get("last_modified_date", Instant.class))
                             .build();

@@ -372,7 +372,6 @@ class EventsSearchControllerIntegrationTest extends BaseIntegrationTest {
                 .capacity(10)
                 .imageKey("image.webp")
                 .organizerId(USER_ID)
-                .recurrence(null)
                 .isNew(true);
         customizer.accept(builder);
         return builder.build();
