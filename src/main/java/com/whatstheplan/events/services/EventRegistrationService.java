@@ -3,14 +3,17 @@ package com.whatstheplan.events.services;
 import com.whatstheplan.events.exceptions.DuplicateRegistrationException;
 import com.whatstheplan.events.exceptions.EventFullException;
 import com.whatstheplan.events.model.entities.Registration;
+import com.whatstheplan.events.model.response.EventResponse;
 import com.whatstheplan.events.repository.EventsRepository;
 import com.whatstheplan.events.repository.RegistrationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -41,5 +44,16 @@ public class EventRegistrationService {
                         .then(eventsRepository.incrementRegistrations(eventId))
                         .doOnSuccess(e -> log.info("Updated event {} registrations to {}", eventId, e.getRegistrations()))
                         .then());
+    }
+
+    public Mono<List<EventResponse>> getRegisteredEvents(UUID user) {
+        return registrationRepository.findAllByUserId(user)
+                .collectList()
+                .map(events -> events.stream()
+                        .map(Registration::getEventId)
+                        .map(eventService::findById)
+                        .toList())
+                .map(Flux::concat)
+                .flatMap(Flux::collectList);
     }
 }

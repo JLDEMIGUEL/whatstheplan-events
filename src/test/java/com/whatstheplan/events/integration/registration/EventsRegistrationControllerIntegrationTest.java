@@ -1,4 +1,4 @@
-package com.whatstheplan.events.integration;
+package com.whatstheplan.events.integration.registration;
 
 import com.whatstheplan.events.model.entities.Event;
 import com.whatstheplan.events.model.entities.Registration;

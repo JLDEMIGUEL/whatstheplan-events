@@ -1,98 +1,62 @@
-package com.whatstheplan.events.integration;
+package com.whatstheplan.events.integration.crud;
 
 import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
+import com.whatstheplan.events.model.entities.EventCategories;
 import com.whatstheplan.events.model.response.ErrorResponse;
+import com.whatstheplan.events.model.response.EventResponse;
 import com.whatstheplan.events.testconfig.BaseIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import software.amazon.awssdk.services.s3.S3AsyncClient;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
+import static com.whatstheplan.events.testconfig.utils.AssertionUtils.assertEventResponse;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventCategories;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventEntity;
-import static com.whatstheplan.events.testconfig.utils.S3MockUtils.mockS3DeleteObject;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
-class EventsDeleteControllerIntegrationTest extends BaseIntegrationTest {
-
-    @MockitoBean
-    private S3AsyncClient s3Client;
+class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
 
     @ParameterizedTest
     @MethodSource("provideEventEntities")
-    void whenANewEventDeleteRequest_thenShouldDeleteEventFromDatabaseAndImage(
+    void whenANewEventRetrievalRequest_thenShouldReturnOkEventResponse(
             Event event,
             List<Category> categories) {
         // given
         eventsRepository.insert(event).block();
         categoryRepository.saveAll(categories).collectList().block();
-
-        mockS3DeleteObject(s3Client);
-
-        // when - then
-        webTestClient
-                .mutateWith(JWT)
-                .delete()
-                .uri("/events/" + event.getId())
-                .exchange()
-                .expectStatus().isOk();
-
-        Event deletedEvent = eventsRepository.findById(event.getId()).block();
-        assertThat(deletedEvent).isNull();
-
-        verify(s3Client, times(1))
-                .deleteObject(any(DeleteObjectRequest.class));
-    }
-
-    @ParameterizedTest
-    @MethodSource("provideEventEntities")
-    void whenANewEventDeleteRequestAndDeleteImageFails_thenShouldDeleteEventFromDatabase(
-            Event event,
-            List<Category> categories) {
-        // given
-        eventsRepository.insert(event).block();
-        categoryRepository.saveAll(categories).collectList().block();
-
-        given(s3Client.deleteObject(any(DeleteObjectRequest.class)))
-                .willReturn(CompletableFuture.failedFuture(new RuntimeException("Error deleting image")));
+        eventCategoriesRepository.saveAll(
+                        categories.stream().map(c -> EventCategories.from(event.getId(), c.getId())).toList())
+                .collectList().block();
 
         // when - then
         webTestClient
                 .mutateWith(JWT)
-                .delete()
+                .get()
                 .uri("/events/" + event.getId())
                 .exchange()
-                .expectStatus().isOk();
-
-        Event deletedEvent = eventsRepository.findById(event.getId()).block();
-        assertThat(deletedEvent).isNull();
-
-        verify(s3Client, times(1))
-                .deleteObject(any(DeleteObjectRequest.class));
+                .expectStatus().isOk()
+                .expectBodyList(EventResponse.class)
+                .hasSize(1)
+                .consumeWith(response -> {
+                    assertEventResponse(event, categories, response.getResponseBody().get(0), event.getRegistrations());
+                });
     }
 
     @Test
-    void whenANewEventDeleteRequestWithWrongEventId_thenShouldReturnBadRequest() {
+    void whenANewEventRetrievalRequestWithWrongEventId_thenShouldReturnBadRequest() {
         // given
         UUID wrongEventId = UUID.randomUUID();
 
         // when - then
         webTestClient
                 .mutateWith(JWT)
-                .delete()
+                .get()
                 .uri("/events/" + wrongEventId)
                 .exchange()
                 .expectStatus().isBadRequest()
@@ -106,21 +70,21 @@ class EventsDeleteControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void whenANewEventDeleteRequestWithMissingRole_thenWillReturnUnauthorized() {
+    void whenANewEventRetrievalRequestWithMissingRole_thenWillReturnUnauthorized() {
         // given - when - then
         webTestClient
                 .mutateWith(JWT_NO_ROLE)
-                .delete()
+                .get()
                 .uri("/events")
                 .exchange()
                 .expectStatus().isForbidden();
     }
 
     @Test
-    void whenANewEventDeleteRequestWithMissingToken_thenWillReturnUnauthorized() {
+    void whenANewEventRetrievalRequestWithMissingToken_thenWillReturnUnauthorized() {
         // given - when - then
         webTestClient
-                .delete()
+                .get()
                 .uri("/events")
                 .exchange()
                 .expectStatus().isUnauthorized();

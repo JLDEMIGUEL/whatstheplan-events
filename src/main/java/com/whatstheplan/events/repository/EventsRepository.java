@@ -3,11 +3,14 @@ package com.whatstheplan.events.repository;
 import com.whatstheplan.events.model.entities.Event;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
 public interface EventsRepository extends ReactiveCrudRepository<Event, UUID>, CustomEventRepository {
+
+    Flux<Event> findByOrganizerId(UUID userId);
 
     @Query("""
             INSERT INTO event (
@@ -60,4 +63,5 @@ public interface EventsRepository extends ReactiveCrudRepository<Event, UUID>, C
 
     @Query("UPDATE event SET registrations = registrations + 1 WHERE id = :eventId RETURNING *")
     Mono<Event> incrementRegistrations(UUID eventId);
+
 }

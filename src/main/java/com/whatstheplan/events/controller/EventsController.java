@@ -23,11 +23,15 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
+
+import static com.whatstheplan.events.utils.Utils.getUserId;
 
 @Slf4j
 @RestController
@@ -42,6 +46,15 @@ public class EventsController {
             @PathVariable("eventId") UUID eventId) {
         return Mono.just(eventId)
                 .flatMap(eventService::findById)
+                .map(ResponseEntity::ok);
+    }
+
+    @GetMapping
+    public Mono<ResponseEntity<List<EventResponse>>> getUserEvents() {
+        return getUserId()
+                .map(eventService::findByUserId)
+                .flatMap(Flux::collectList)
+                .doOnSuccess(response -> log.info("Returning event responses: {}", response))
                 .map(ResponseEntity::ok);
     }
 

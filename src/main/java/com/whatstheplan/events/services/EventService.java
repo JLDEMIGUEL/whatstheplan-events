@@ -157,4 +157,12 @@ public class EventService {
                 .doOnSuccess(e -> log.info("Successfully deleted event {} and its associated categories", eventId))
                 .doOnError(error -> log.error("Error deleting event {}: {}", eventId, error.getMessage(), error));
     }
+
+    public Flux<EventResponse> findByUserId(UUID userId) {
+        return eventsRepository.findByOrganizerId(userId)
+                .flatMap(event -> eventCategoryRepository.findAllByEventId(event.getId())
+                        .flatMap(eventCategory -> categoryRepository.findById(eventCategory.getCategoryId()))
+                        .collectList()
+                        .map(categories -> EventResponse.fromEntity(event, categories)));
+    }
 }

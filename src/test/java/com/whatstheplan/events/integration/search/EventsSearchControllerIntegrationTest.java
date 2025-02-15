@@ -1,4 +1,4 @@
-package com.whatstheplan.events.integration;
+package com.whatstheplan.events.integration.search;
 
 import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
