@@ -1,5 +1,6 @@
 package com.whatstheplan.events.model;
 
+import com.whatstheplan.events.exceptions.ValidationException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -56,7 +57,7 @@ public enum ActivityType {
         return Arrays.stream(ActivityType.values())
                 .filter(activityType -> activityType.name.equals(name))
                 .findFirst()
-                .orElseThrow();
+                .orElseThrow(() -> new ValidationException("Invalid activity type with value: " + name));
     }
 }
 

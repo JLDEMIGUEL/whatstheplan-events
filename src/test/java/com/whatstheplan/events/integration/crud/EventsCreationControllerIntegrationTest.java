@@ -241,6 +241,14 @@ class EventsCreationControllerIntegrationTest extends BaseIntegrationTest {
                         validImage,
                         List.of("Capacity must be at least 1.")
                 ),
+                // --- Invalid activity type ---
+                arguments(
+                        generateEventCreationRequest().toBuilder()
+                                .activityTypes(List.of("invalid"))
+                                .build(),
+                        validImage,
+                        List.of("Invalid activity type with value: invalid")
+                ),
                 // --- Invalid image extension (GIF) ---
                 arguments(
                         validRequest,

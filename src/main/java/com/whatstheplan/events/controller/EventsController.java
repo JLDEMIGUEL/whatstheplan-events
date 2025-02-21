@@ -2,6 +2,7 @@ package com.whatstheplan.events.controller;
 
 import com.whatstheplan.events.exceptions.FileValidationException;
 import com.whatstheplan.events.exceptions.ValidationException;
+import com.whatstheplan.events.model.ActivityType;
 import com.whatstheplan.events.model.request.EventRequest;
 import com.whatstheplan.events.model.response.EventResponse;
 import com.whatstheplan.events.services.EventService;
@@ -106,6 +107,8 @@ public class EventsController {
     private void validateEventRequest(EventRequest request) {
         Errors errors = new BeanPropertyBindingResult(request, "eventRequest");
         validator.validate(request, errors);
+
+        Optional.ofNullable(request.getActivityTypes()).orElse(List.of()).forEach(ActivityType::from);
 
         if (errors.hasErrors()) {
             throw new ValidationException(String.join(" ", errors.getFieldErrors().stream()
