@@ -51,14 +51,6 @@ public class CustomEventRepositoryImpl implements CustomEventRepository {
             sql.append(" AND e.duration <= :durationTo");
             params.put("durationTo", Interval.from(filter.getDurationTo()));
         }
-        if (filter.getCapacityMin() != null) {
-            sql.append(" AND e.capacity >= :capacityMin");
-            params.put("capacityMin", filter.getCapacityMin());
-        }
-        if (filter.getCapacityMax() != null) {
-            sql.append(" AND e.capacity <= :capacityMax");
-            params.put("capacityMax", filter.getCapacityMax());
-        }
         if (filter.getActivityTypes() != null && !filter.getActivityTypes().isEmpty()) {
             sql.append(" AND e.id IN (SELECT ec.event_id FROM event_categories ec " +
                     "JOIN category c ON ec.category_id = c.id WHERE c.name IN (:categories))");

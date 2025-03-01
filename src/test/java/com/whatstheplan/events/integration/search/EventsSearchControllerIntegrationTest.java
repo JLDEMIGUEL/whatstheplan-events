@@ -149,21 +149,6 @@ class EventsSearchControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 Arguments.of(
                         List.of(
-                                new EventData(createEvent(e -> e.capacity(5)), List.of()),
-                                new EventData(createEvent(e -> e.capacity(15)), List.of()),
-                                new EventData(createEvent(e -> e.capacity(25)), List.of())
-                        ),
-                        new LinkedMultiValueMap<>() {{
-                            add("capacityMin", "10");
-                            add("capacityMax", "20");
-                        }},
-                        1,
-                        (Consumer<List<EventResponse>>) (List<EventResponse> responses) -> {
-                            assertThat(responses.get(0).getCapacity()).isEqualTo(15);
-                        }
-                ),
-                Arguments.of(
-                        List.of(
                                 new EventData(
                                         createEvent(e -> e.dateTime(TODAY.plusDays(1))), List.of()
                                 ),
@@ -234,20 +219,6 @@ class EventsSearchControllerIntegrationTest extends BaseIntegrationTest {
                 ),
                 Arguments.of(
                         List.of(
-                                new EventData(createEvent(e -> e.capacity(10)), List.of()),
-                                new EventData(createEvent(e -> e.capacity(15)), List.of())
-                        ),
-                        new LinkedMultiValueMap<>() {{
-                            add("capacityMin", "10");
-                            add("capacityMax", "10");
-                        }},
-                        1,
-                        (Consumer<List<EventResponse>>) responses -> {
-                            assertThat(responses.get(0).getCapacity()).isEqualTo(10);
-                        }
-                ),
-                Arguments.of(
-                        List.of(
                                 new EventData(createEvent(e -> e.dateTime(TODAY.plusDays(1))), List.of()),
                                 new EventData(createEvent(e -> e.dateTime(TODAY.plusMonths(3))), List.of())
                         ),
@@ -277,8 +248,6 @@ class EventsSearchControllerIntegrationTest extends BaseIntegrationTest {
                             add("location", "Berlin");
                             add("durationFrom", "PT1H");
                             add("durationTo", "PT2H");
-                            add("capacityMin", "15");
-                            add("capacityMax", "20");
                             add("dateTimeFrom", TODAY.plusDays(1).format(ISO_DATE_TIME));
                             add("dateTimeTo", TODAY.plusDays(10).format(ISO_DATE_TIME));
                             add("activityTypes", "Swimming");

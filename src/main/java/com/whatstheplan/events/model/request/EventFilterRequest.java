@@ -27,9 +27,6 @@ public class EventFilterRequest {
     @Builder.Default
     private LocalDateTime dateTimeTo = LocalDateTime.now().plusMonths(2);
 
-    private Integer capacityMin;
-    private Integer capacityMax;
-
     @Builder.Default
     private List<String> activityTypes = Collections.emptyList();
 }
