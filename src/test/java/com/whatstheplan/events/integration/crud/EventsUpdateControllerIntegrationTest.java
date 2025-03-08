@@ -219,6 +219,39 @@ class EventsUpdateControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void whenANewEventUpdateRequestWhichIsNotOrganizedByHim_thenWillReturnForbidden() {
+        // given
+        Event event = generateEventEntity();
+        event.setOrganizerId(UUID.randomUUID());
+        List<Category> categories = generateEventCategories();
+        eventsRepository.insert(event).block();
+        categoryRepository.saveAll(categories).collectList().block();
+        eventCategoriesRepository.saveAll(
+                        categories.stream().map(c -> EventCategories.from(event.getId(), c.getId())).toList())
+                .collectList().block();
+
+        EventRequest request = generateEventCreationRequest();
+
+        // when - then
+        webTestClient
+                .mutateWith(JWT)
+                .put()
+                .uri("/events/" + event.getId())
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters
+                        .fromMultipartData("event", request)
+                        .with("image", NEW_IMAGE))
+                .exchange()
+                .expectStatus().isForbidden()
+                .expectBody(ErrorResponse.class)
+                .consumeWith(response -> {
+                    ErrorResponse responseBody = response.getResponseBody();
+                    assertThat(responseBody.getReason())
+                            .isEqualTo("Requester User ID does not match with the organizer User ID");
+                });
+    }
+
+    @Test
     void whenANewEventUpdateRequestWithMissingRole_thenWillReturnUnauthorized() {
         // given
         Event event = generateEventEntity();

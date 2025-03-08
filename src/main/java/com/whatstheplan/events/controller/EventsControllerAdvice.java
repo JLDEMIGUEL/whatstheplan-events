@@ -3,6 +3,7 @@ package com.whatstheplan.events.controller;
 import com.whatstheplan.events.exceptions.DuplicateRegistrationException;
 import com.whatstheplan.events.exceptions.EventFullException;
 import com.whatstheplan.events.exceptions.EventNotFoundException;
+import com.whatstheplan.events.exceptions.EventOrganizerMismatchException;
 import com.whatstheplan.events.exceptions.FileValidationException;
 import com.whatstheplan.events.exceptions.UploadImageToS3Exception;
 import com.whatstheplan.events.exceptions.ValidationException;
@@ -12,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.server.ServerWebInputException;
+
+import static org.springframework.http.HttpStatus.FORBIDDEN;
 
 @Slf4j
 @ControllerAdvice
@@ -45,6 +48,11 @@ public class EventsControllerAdvice {
     @ExceptionHandler(DuplicateRegistrationException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateRegistrationException(DuplicateRegistrationException ex) {
         return ResponseEntity.badRequest().body(new ErrorResponse(ex.getMessage()));
+    }
+
+    @ExceptionHandler(EventOrganizerMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleEventOrganizerMismatchException(EventOrganizerMismatchException ex) {
+        return ResponseEntity.status(FORBIDDEN).body(new ErrorResponse(ex.getMessage()));
     }
 
     @ExceptionHandler(ServerWebInputException.class)

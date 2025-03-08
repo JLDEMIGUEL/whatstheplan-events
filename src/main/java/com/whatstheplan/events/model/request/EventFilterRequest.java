@@ -17,10 +17,8 @@ import java.util.List;
 @AllArgsConstructor
 public class EventFilterRequest {
 
-    private String location;
-
-    private Duration durationFrom;
-    private Duration durationTo;
+    private Duration durationFrom = Duration.ZERO;
+    private Duration durationTo = Duration.ofHours(24);
 
     @Builder.Default
     private LocalDateTime dateTimeFrom = LocalDateTime.now();

@@ -255,7 +255,7 @@ class EventsSearchControllerIntegrationTest extends BaseIntegrationTest {
                         2,
                         (Consumer<List<EventResponse>>) responses -> {
                             assertThat(responses)
-                                    .allMatch(r -> r.getLocation().equals("Berlin") &&
+                                    .allMatch(r -> r.getLocation().equals("Baerlin") &&
                                             r.getCapacity() >= 15 &&
                                             r.getCapacity() <= 20 &&
                                             r.getActivityTypes().contains("Swimming"));

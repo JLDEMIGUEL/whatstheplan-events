@@ -16,7 +16,7 @@ public class EventSearchService {
     private final EventsRepository eventsRepository;
 
     public Flux<EventResponse> searchEvents(EventFilterRequest filter) {
-        return eventsRepository.searchEvents(filter)
+        return eventsRepository.searchEvents(filter, "") //TODO get location from user data
                 .onErrorResume(e -> {
                     log.error("Error processing event", e);
                     return Flux.empty();

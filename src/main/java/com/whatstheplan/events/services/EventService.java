@@ -1,6 +1,7 @@
 package com.whatstheplan.events.services;
 
 import com.whatstheplan.events.exceptions.EventNotFoundException;
+import com.whatstheplan.events.exceptions.EventOrganizerMismatchException;
 import com.whatstheplan.events.exceptions.UploadImageToS3Exception;
 import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
@@ -20,6 +21,8 @@ import reactor.core.publisher.Mono;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.whatstheplan.events.utils.Utils.getUserId;
 
 @Slf4j
 @Service
@@ -88,9 +91,18 @@ public class EventService {
     public Mono<EventResponse> updateEvent(UUID eventId, EventRequest request, Optional<FilePart> image) {
         return eventsRepository.findById(eventId)
                 .switchIfEmpty(Mono.error(new EventNotFoundException("Event not found with id: " + eventId)))
-                .flatMap(event -> image
-                        .map(filePart -> updateEventAndImage(event, request, filePart))
-                        .orElseGet(() -> updateJustEvent(event, request, event.getImageKey())));
+                .flatMap(event ->
+                        getUserId()
+                                .flatMap(userId -> {
+                                    if (!event.getOrganizerId().equals(userId)) {
+                                        return Mono.error(new EventOrganizerMismatchException(
+                                                "Requester User ID does not match with the organizer User ID"));
+                                    }
+                                    return image
+                                            .map(filePart -> updateEventAndImage(event, request, filePart))
+                                            .orElseGet(() -> updateJustEvent(event, request, event.getImageKey()));
+                                })
+                );
     }
 
     private Mono<EventResponse> updateJustEvent(Event event, EventRequest request, String imageKey) {
