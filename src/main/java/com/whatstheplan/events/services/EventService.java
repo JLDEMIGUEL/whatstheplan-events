@@ -44,7 +44,8 @@ public class EventService {
                         })
                         .flatMap(eventCategory -> categoryRepository.findById(eventCategory.getCategoryId()))
                         .collectList()
-                        .map(categories -> EventResponse.fromEntity(event, categories)))
+                        .flatMap(categories -> getUserId().map(userId ->
+                                EventResponse.fromEntity(userId, event, categories))))
                 .doOnSuccess(response -> log.info("Returning event response: {}", response));
     }
 
@@ -78,9 +79,8 @@ public class EventService {
                                         .thenReturn(savedCategories)
                         )
                         .doOnSuccess(savedCategories -> log.info("Event categories saved successfully: {}", savedCategories))
-                        .map(savedCategories ->
-                                EventResponse.fromEntity(savedEvent, savedCategories)
-                        ))
+                        .flatMap(categories -> getUserId().map(userId ->
+                                EventResponse.fromEntity(userId, savedEvent, categories))))
                 .doOnError(ex -> log.error("Error saving event", ex))
                 .onErrorResume(ex ->
                         s3Service.deleteFile(imagePath.get())
@@ -132,7 +132,8 @@ public class EventService {
                                                                 .thenReturn(categories)
                                                 )
                                 )
-                                .map(categories -> EventResponse.fromEntity(updatedEvent, categories))
+                                .flatMap(categories -> getUserId().map(userId ->
+                                        EventResponse.fromEntity(userId, updatedEvent, categories)))
                 )
                 .doOnSuccess(savedCategories -> log.info("Event categories updated successfully: {}", savedCategories))
                 .doOnError(ex -> log.error("Error updating event", ex));
@@ -175,6 +176,6 @@ public class EventService {
                 .flatMap(event -> eventCategoryRepository.findAllByEventId(event.getId())
                         .flatMap(eventCategory -> categoryRepository.findById(eventCategory.getCategoryId()))
                         .collectList()
-                        .map(categories -> EventResponse.fromEntity(event, categories)));
+                        .map(categories -> EventResponse.fromEntity(userId, event, categories)));
     }
 }

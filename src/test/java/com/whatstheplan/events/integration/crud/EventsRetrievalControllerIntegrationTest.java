@@ -49,6 +49,27 @@ class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void whenANewEventRetrievalRequestCreatedByOtherUser_shouldReturnFalseInOwnedField() {
+        // given
+        Event event = generateEventEntity();
+        event.setOrganizerId(UUID.randomUUID());
+        eventsRepository.insert(event).block();
+
+        // when - then
+        webTestClient
+                .mutateWith(JWT)
+                .get()
+                .uri("/events/" + event.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(EventResponse.class)
+                .hasSize(1)
+                .consumeWith(response -> {
+                    assertThat(response.getResponseBody().getFirst().getIsOwnedByUser()).isFalse();
+                });
+    }
+
+    @Test
     void whenANewEventRetrievalRequestWithWrongEventId_thenShouldReturnBadRequest() {
         // given
         UUID wrongEventId = UUID.randomUUID();

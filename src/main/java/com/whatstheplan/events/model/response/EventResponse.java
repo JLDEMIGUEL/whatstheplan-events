@@ -33,8 +33,9 @@ public class EventResponse {
     private Instant lastModifiedDate;
     private List<String> activityTypes;
     private Integer registrations;
+    private Boolean isOwnedByUser;
 
-    public static EventResponse fromEntity(Event event, List<Category> activityTypes) {
+    public static EventResponse fromEntity(UUID userId, Event event, List<Category> activityTypes) {
         return EventResponse.builder()
                 .id(event.getId())
                 .title(event.getTitle())
@@ -51,6 +52,7 @@ public class EventResponse {
                 .lastModifiedDate(event.getLastModifiedDate())
                 .activityTypes(activityTypes.stream().map(Category::getName).toList())
                 .registrations(event.getRegistrations())
+                .isOwnedByUser(event.getOrganizerId().equals(userId))
                 .build();
     }
 }

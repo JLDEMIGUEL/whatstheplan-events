@@ -9,6 +9,7 @@ import lombok.experimental.UtilityClass;
 import java.util.List;
 
 import static com.whatstheplan.events.testconfig.BaseIntegrationTest.USER_ID;
+import static java.lang.Boolean.TRUE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @UtilityClass
@@ -33,6 +34,7 @@ public class AssertionUtils {
         assertThat(eventResponse.getCreatedDate()).isNotNull();
         assertThat(eventResponse.getLastModifiedDate()).isNotNull();
         assertThat(eventResponse.getRegistrations()).isEqualTo(registrations);
+        assertThat(eventResponse.getIsOwnedByUser()).isEqualTo(TRUE);
 
         assertThat(eventResponse.getActivityTypes()).containsAll(request.getActivityTypes());
         assertThat(eventResponse.getActivityTypes().size()).isEqualTo(request.getActivityTypes().size());
@@ -54,7 +56,7 @@ public class AssertionUtils {
         assertThat(eventResponse.getCreatedDate()).isNotNull();
         assertThat(eventResponse.getLastModifiedDate()).isNotNull();
         assertThat(eventResponse.getRegistrations()).isEqualTo(registrations);
-
+        assertThat(eventResponse.getIsOwnedByUser()).isEqualTo(TRUE);
 
         assertThat(eventResponse.getActivityTypes())
                 .containsAll(categories.stream().map(Category::getName).toList());
