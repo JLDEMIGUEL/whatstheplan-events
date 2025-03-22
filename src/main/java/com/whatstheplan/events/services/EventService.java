@@ -161,10 +161,17 @@ public class EventService {
         return eventsRepository.findById(eventId)
                 .switchIfEmpty(Mono.error(new EventNotFoundException("Event not found with id: " + eventId)))
                 .flatMap(event ->
-                        s3Service.deleteFile(event.getImageKey())
-                                .doOnError(error -> log.error("Error deleting image for event {}: {}", eventId, error.getMessage()))
-                                .onErrorResume(error -> Mono.empty())
-                )
+                        getUserId()
+                                .flatMap(userId -> {
+                                            if (!event.getOrganizerId().equals(userId)) {
+                                                return Mono.error(new EventOrganizerMismatchException(
+                                                        "Requester User ID does not match with the organizer User ID"));
+                                            }
+                                            return s3Service.deleteFile(event.getImageKey())
+                                                    .doOnError(error -> log.error("Error deleting image for event {}: {}", eventId, error.getMessage()))
+                                                    .onErrorResume(error -> Mono.empty());
+                                        }
+                                ))
                 .then(eventsRepository.deleteById(eventId))
                 .then(eventCategoryRepository.deleteAllByEventId(eventId))
                 .doOnSuccess(e -> log.info("Successfully deleted event {} and its associated categories", eventId))

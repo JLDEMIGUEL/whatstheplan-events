@@ -2,6 +2,7 @@ package com.whatstheplan.events.integration.crud;
 
 import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
+import com.whatstheplan.events.model.entities.EventCategories;
 import com.whatstheplan.events.model.response.ErrorResponse;
 import com.whatstheplan.events.testconfig.BaseIntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -55,6 +56,33 @@ class EventsDeleteControllerIntegrationTest extends BaseIntegrationTest {
 
         verify(s3Client, times(1))
                 .deleteObject(any(DeleteObjectRequest.class));
+    }
+
+    @Test
+    void whenANewEventDeleteRequestWhichIsNotOrganizedByHim_thenWillReturnForbidden() {
+        // given
+        Event event = generateEventEntity();
+        event.setOrganizerId(UUID.randomUUID());
+        List<Category> categories = generateEventCategories();
+        eventsRepository.insert(event).block();
+        categoryRepository.saveAll(categories).collectList().block();
+        eventCategoriesRepository.saveAll(
+                        categories.stream().map(c -> EventCategories.from(event.getId(), c.getId())).toList())
+                .collectList().block();
+
+        // when - then
+        webTestClient
+                .mutateWith(JWT)
+                .delete()
+                .uri("/events/" + event.getId())
+                .exchange()
+                .expectStatus().isForbidden()
+                .expectBody(ErrorResponse.class)
+                .consumeWith(response -> {
+                    ErrorResponse responseBody = response.getResponseBody();
+                    assertThat(responseBody.getReason())
+                            .isEqualTo("Requester User ID does not match with the organizer User ID");
+                });
     }
 
     @ParameterizedTest
