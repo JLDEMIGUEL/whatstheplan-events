@@ -7,6 +7,7 @@ import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
 import com.whatstheplan.events.model.entities.EventCategories;
 import com.whatstheplan.events.model.request.EventRequest;
+import com.whatstheplan.events.model.response.DetailedEventResponse;
 import com.whatstheplan.events.model.response.EventResponse;
 import com.whatstheplan.events.repository.CategoryRepository;
 import com.whatstheplan.events.repository.EventCategoriesRepository;
@@ -33,21 +34,27 @@ public class EventService {
     private final EventsRepository eventsRepository;
     private final CategoryRepository categoryRepository;
     private final EventCategoriesRepository eventCategoryRepository;
+    private final EventRegistrationService eventRegistrationService;
 
-    public Mono<EventResponse> findById(UUID eventId) {
+    public Mono<DetailedEventResponse> findById(UUID eventId) {
         return eventsRepository.findById(eventId)
                 .doOnSuccess(event -> log.info("Found event with id {} and data {}", eventId, event))
                 .switchIfEmpty(Mono.error(new EventNotFoundException("Event not found with id: " + eventId)))
-                .flatMap(event -> eventCategoryRepository.findAllByEventId(eventId)
-                        .doOnError(ex -> {
-                            throw new RuntimeException("Unable to retrieve event categories for event id: " + eventId);
-                        })
-                        .flatMap(eventCategory -> categoryRepository.findById(eventCategory.getCategoryId()))
-                        .collectList()
-                        .flatMap(categories -> getUserId().map(userId ->
-                                EventResponse.fromEntity(userId, event, categories))))
+                .flatMap(event -> getUserId()
+                        .flatMap(userId ->
+                                Mono.zip(
+                                        eventCategoryRepository.findAllByEventId(eventId)
+                                                .flatMap(eventCategory -> categoryRepository.findById(eventCategory.getCategoryId()))
+                                                .collectList(),
+                                        eventRegistrationService.isRegistered(userId, eventId),
+                                        (categories, isRegistered) ->
+                                                DetailedEventResponse.fromEntityDetailed(userId, event, categories, isRegistered)
+                                )
+                        )
+                )
                 .doOnSuccess(response -> log.info("Returning event response: {}", response));
     }
+
 
     public Mono<EventResponse> saveEvent(EventRequest request, FilePart image) {
         AtomicReference<String> imagePath = new AtomicReference<>();

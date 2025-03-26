@@ -4,6 +4,7 @@ import com.whatstheplan.events.exceptions.FileValidationException;
 import com.whatstheplan.events.exceptions.ValidationException;
 import com.whatstheplan.events.model.ActivityType;
 import com.whatstheplan.events.model.request.EventRequest;
+import com.whatstheplan.events.model.response.DetailedEventResponse;
 import com.whatstheplan.events.model.response.EventResponse;
 import com.whatstheplan.events.services.EventService;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +44,7 @@ public class EventsController {
     private final Validator validator;
 
     @GetMapping("/{eventId}")
-    public Mono<ResponseEntity<EventResponse>> getEventById(
+    public Mono<ResponseEntity<DetailedEventResponse>> getEventById(
             @PathVariable("eventId") UUID eventId) {
         return Mono.just(eventId)
                 .flatMap(eventService::findById)

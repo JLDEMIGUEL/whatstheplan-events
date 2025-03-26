@@ -3,6 +3,7 @@ package com.whatstheplan.events.testconfig.utils;
 import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
 import com.whatstheplan.events.model.request.EventRequest;
+import com.whatstheplan.events.model.response.DetailedEventResponse;
 import com.whatstheplan.events.model.response.EventResponse;
 import lombok.experimental.UtilityClass;
 
@@ -61,6 +62,15 @@ public class AssertionUtils {
         assertThat(eventResponse.getActivityTypes())
                 .containsAll(categories.stream().map(Category::getName).toList());
         assertThat(eventResponse.getActivityTypes().size()).isEqualTo(categories.size());
+    }
+
+    public static void assertDetailedEventResponse(Event eventEntity, List<Category> categories,
+                                                   DetailedEventResponse eventResponse, Integer registrations,
+                                                   boolean isRegistered) {
+
+        assertEventResponse(eventEntity, categories, eventResponse, registrations);
+
+        assertThat(eventResponse.getIsRegistered()).isEqualTo(isRegistered);
     }
 
     public static void assertEventEntity(

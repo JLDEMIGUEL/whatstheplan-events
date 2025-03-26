@@ -2,6 +2,7 @@ package com.whatstheplan.events.testconfig.utils;
 
 import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
+import com.whatstheplan.events.model.entities.Registration;
 import com.whatstheplan.events.model.request.EventRequest;
 import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +71,15 @@ public class DataMockUtils {
         return Category.builder()
                 .id(UUID.randomUUID())
                 .name(name)
+                .isNew(true)
+                .build();
+    }
+
+    public static Registration generateRegistration(UUID eventId) {
+        return Registration.builder()
+                .id(UUID.randomUUID())
+                .userId(USER_ID)
+                .eventId(eventId)
                 .isNew(true)
                 .build();
     }

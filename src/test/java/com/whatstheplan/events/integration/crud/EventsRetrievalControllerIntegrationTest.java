@@ -3,8 +3,8 @@ package com.whatstheplan.events.integration.crud;
 import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
 import com.whatstheplan.events.model.entities.EventCategories;
+import com.whatstheplan.events.model.response.DetailedEventResponse;
 import com.whatstheplan.events.model.response.ErrorResponse;
-import com.whatstheplan.events.model.response.EventResponse;
 import com.whatstheplan.events.testconfig.BaseIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,9 +15,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static com.whatstheplan.events.testconfig.utils.AssertionUtils.assertEventResponse;
+import static com.whatstheplan.events.testconfig.utils.AssertionUtils.assertDetailedEventResponse;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventCategories;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventEntity;
+import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateRegistration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
@@ -26,13 +27,17 @@ class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
     @MethodSource("provideEventEntities")
     void whenANewEventRetrievalRequest_thenShouldReturnOkEventResponse(
             Event event,
-            List<Category> categories) {
+            List<Category> categories,
+            boolean isRegistered) {
         // given
         eventsRepository.insert(event).block();
         categoryRepository.saveAll(categories).collectList().block();
         eventCategoriesRepository.saveAll(
                         categories.stream().map(c -> EventCategories.from(event.getId(), c.getId())).toList())
                 .collectList().block();
+        if (isRegistered) {
+            registrationRepository.save(generateRegistration(event.getId())).block();
+        }
 
         // when - then
         webTestClient
@@ -41,10 +46,10 @@ class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
                 .uri("/events/" + event.getId())
                 .exchange()
                 .expectStatus().isOk()
-                .expectBodyList(EventResponse.class)
+                .expectBodyList(DetailedEventResponse.class)
                 .hasSize(1)
                 .consumeWith(response -> {
-                    assertEventResponse(event, categories, response.getResponseBody().get(0), event.getRegistrations());
+                    assertDetailedEventResponse(event, categories, response.getResponseBody().get(0), event.getRegistrations(), isRegistered);
                 });
     }
 
@@ -62,7 +67,7 @@ class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
                 .uri("/events/" + event.getId())
                 .exchange()
                 .expectStatus().isOk()
-                .expectBodyList(EventResponse.class)
+                .expectBodyList(DetailedEventResponse.class)
                 .hasSize(1)
                 .consumeWith(response -> {
                     assertThat(response.getResponseBody().getFirst().getIsOwnedByUser()).isFalse();
@@ -115,8 +120,10 @@ class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
         Event event = generateEventEntity();
         List<Category> categories = generateEventCategories();
         return Stream.of(
-                Arguments.of(event, categories),
-                Arguments.of(event, List.of())
+                Arguments.of(event, categories, true),
+                Arguments.of(event, List.of(), true),
+                Arguments.of(event, categories, false),
+                Arguments.of(event, List.of(), false)
         );
     }
 
