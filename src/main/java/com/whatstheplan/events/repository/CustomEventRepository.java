@@ -5,5 +5,5 @@ import com.whatstheplan.events.model.response.EventResponse;
 import reactor.core.publisher.Flux;
 
 public interface CustomEventRepository {
-    Flux<EventResponse> searchEvents(EventFilterRequest filter, String location);
+    Flux<EventResponse> searchEvents(EventFilterRequest filter);
 }

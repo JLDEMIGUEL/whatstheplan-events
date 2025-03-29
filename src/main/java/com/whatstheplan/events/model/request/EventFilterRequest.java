@@ -17,6 +17,8 @@ import java.util.List;
 @AllArgsConstructor
 public class EventFilterRequest {
 
+    private String location;
+
     private Duration durationFrom = Duration.ZERO;
     private Duration durationTo = Duration.ofHours(24);
 

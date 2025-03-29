@@ -25,7 +25,7 @@ public class CustomEventRepositoryImpl implements CustomEventRepository {
     }
 
     @Override
-    public Flux<EventResponse> searchEvents(EventFilterRequest filter, String location) {
+    public Flux<EventResponse> searchEvents(EventFilterRequest filter) {
         StringBuilder sql = new StringBuilder("""
                     SELECT
                         e.*,
@@ -38,9 +38,9 @@ public class CustomEventRepositoryImpl implements CustomEventRepository {
 
         Map<String, Object> params = new HashMap<>();
 
-        if (location != null && !location.isEmpty()) {
+        if (filter.getLocation() != null && !filter.getLocation().isEmpty()) {
             sql.append(" AND e.location = :location");
-            params.put("location", location);
+            params.put("location", filter.getLocation());
         }
         if (filter.getDurationFrom() != null) {
             sql.append(" AND e.duration >= :durationFrom");
