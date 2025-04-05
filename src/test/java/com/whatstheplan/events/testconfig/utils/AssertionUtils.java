@@ -31,7 +31,6 @@ public class AssertionUtils {
         assertThat(eventResponse.getImageKey()).contains(imageName);
         assertThat(eventResponse.getOrganizerId()).isEqualTo(USER_ID);
         //assertThat(eventResponse.getOrganizerUsername()).isEqualTo(null); TODO
-        //assertThat(eventResponse.getOrganizerEmail()).isEqualTo(null); TODO
         assertThat(eventResponse.getCreatedDate()).isNotNull();
         assertThat(eventResponse.getLastModifiedDate()).isNotNull();
         assertThat(eventResponse.getRegistrations()).isEqualTo(registrations);
@@ -53,7 +52,6 @@ public class AssertionUtils {
         assertThat(eventResponse.getImageKey()).contains(eventEntity.getImageKey());
         assertThat(eventResponse.getOrganizerId()).isEqualTo(USER_ID);
         //assertThat(eventResponse.getOrganizerUsername()).isEqualTo(null); TODO
-        //assertThat(eventResponse.getOrganizerEmail()).isEqualTo(null); TODO
         assertThat(eventResponse.getCreatedDate()).isNotNull();
         assertThat(eventResponse.getLastModifiedDate()).isNotNull();
         assertThat(eventResponse.getRegistrations()).isEqualTo(registrations);
@@ -89,7 +87,6 @@ public class AssertionUtils {
         assertThat(event.getImageKey()).contains(imageName);
         assertThat(event.getOrganizerId()).isEqualTo(USER_ID);
         //assertThat(event.getOrganizerUsername()).isEqualTo(null); TODO
-        //assertThat(event.getOrganizerEmail()).isEqualTo(null); TODO
         assertThat(event.getCreatedDate()).isNotNull();
         assertThat(event.getLastModifiedDate()).isNotNull();
         assertThat(event.getRegistrations()).isEqualTo(registrations);
@@ -116,7 +113,6 @@ public class AssertionUtils {
         assertThat(actualEvent.getImageKey()).contains(expectedEvent.getImageKey());
         assertThat(actualEvent.getOrganizerId()).isEqualTo(USER_ID);
         //assertThat(actualEvent.getOrganizerUsername()).isEqualTo(null); TODO
-        //assertThat(actualEvent.getOrganizerEmail()).isEqualTo(null); TODO
         assertThat(actualEvent.getCreatedDate()).isNotNull();
         assertThat(actualEvent.getLastModifiedDate()).isNotNull();
         assertThat(actualEvent.getRegistrations()).isEqualTo(expectedEvent.getRegistrations());

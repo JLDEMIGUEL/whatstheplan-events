@@ -32,7 +32,6 @@ public class DetailedEventResponse extends EventResponse {
                 .capacity(event.getCapacity())
                 .imageKey(event.getImageKey())
                 .organizerId(event.getOrganizerId())
-                .organizerEmail("") //TODO
                 .organizerUsername("") //TODO
                 .createdDate(event.getCreatedDate())
                 .lastModifiedDate(event.getLastModifiedDate())

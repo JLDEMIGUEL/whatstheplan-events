@@ -28,7 +28,6 @@ public class EventResponse {
     private String imageKey;
     private UUID organizerId;
     private String organizerUsername;
-    private String organizerEmail;
     private Instant createdDate;
     private Instant lastModifiedDate;
     private List<String> activityTypes;
@@ -46,7 +45,6 @@ public class EventResponse {
                 .capacity(event.getCapacity())
                 .imageKey(event.getImageKey())
                 .organizerId(event.getOrganizerId())
-                .organizerEmail("") //TODO
                 .organizerUsername("") //TODO
                 .createdDate(event.getCreatedDate())
                 .lastModifiedDate(event.getLastModifiedDate())
