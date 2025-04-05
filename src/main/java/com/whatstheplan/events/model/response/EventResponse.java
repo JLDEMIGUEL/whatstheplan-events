@@ -27,7 +27,6 @@ public class EventResponse {
     private Integer capacity;
     private String imageKey;
     private UUID organizerId;
-    private String organizerUsername;
     private Instant createdDate;
     private Instant lastModifiedDate;
     private List<String> activityTypes;
@@ -45,7 +44,6 @@ public class EventResponse {
                 .capacity(event.getCapacity())
                 .imageKey(event.getImageKey())
                 .organizerId(event.getOrganizerId())
-                .organizerUsername("") //TODO
                 .createdDate(event.getCreatedDate())
                 .lastModifiedDate(event.getLastModifiedDate())
                 .activityTypes(activityTypes.stream().map(Category::getName).toList())

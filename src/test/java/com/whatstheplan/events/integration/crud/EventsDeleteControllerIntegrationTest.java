@@ -62,7 +62,7 @@ class EventsDeleteControllerIntegrationTest extends BaseIntegrationTest {
     void whenANewEventDeleteRequestWhichIsNotOrganizedByHim_thenWillReturnForbidden() {
         // given
         Event event = generateEventEntity();
-        event.setOrganizerId(UUID.randomUUID());
+        event.setOrganizerId(OTHER_USER_ID);
         List<Category> categories = generateEventCategories();
         eventsRepository.insert(event).block();
         categoryRepository.saveAll(categories).collectList().block();

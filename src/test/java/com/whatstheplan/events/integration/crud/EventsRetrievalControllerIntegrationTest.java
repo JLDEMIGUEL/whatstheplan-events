@@ -49,7 +49,8 @@ class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
                 .expectBodyList(DetailedEventResponse.class)
                 .hasSize(1)
                 .consumeWith(response -> {
-                    assertDetailedEventResponse(event, categories, response.getResponseBody().get(0), event.getRegistrations(), isRegistered);
+                    assertDetailedEventResponse(event, categories, response.getResponseBody().get(0),
+                            event.getRegistrations(), isRegistered, USERNAME);
                 });
     }
 
@@ -57,7 +58,7 @@ class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
     void whenANewEventRetrievalRequestCreatedByOtherUser_shouldReturnFalseInOwnedField() {
         // given
         Event event = generateEventEntity();
-        event.setOrganizerId(UUID.randomUUID());
+        event.setOrganizerId(OTHER_USER_ID);
         eventsRepository.insert(event).block();
 
         // when - then
@@ -71,6 +72,7 @@ class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
                 .hasSize(1)
                 .consumeWith(response -> {
                     assertThat(response.getResponseBody().getFirst().getIsOwnedByUser()).isFalse();
+                    assertThat(response.getResponseBody().getFirst().getOrganizerUsername()).isEqualTo(OTHER_USERNAME);
                 });
     }
 

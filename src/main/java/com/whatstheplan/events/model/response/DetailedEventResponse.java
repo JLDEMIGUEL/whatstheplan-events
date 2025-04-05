@@ -20,8 +20,9 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 public class DetailedEventResponse extends EventResponse {
     private Boolean isRegistered;
+    private String organizerUsername;
 
-    public static DetailedEventResponse fromEntityDetailed(UUID userId, Event event, List<Category> activityTypes, Boolean isRegistered) {
+    public static DetailedEventResponse fromEntityDetailed(UUID userId, Event event, List<Category> activityTypes, Boolean isRegistered, String organizerUsername) {
         return DetailedEventResponse.builder()
                 .id(event.getId())
                 .title(event.getTitle())
@@ -32,7 +33,7 @@ public class DetailedEventResponse extends EventResponse {
                 .capacity(event.getCapacity())
                 .imageKey(event.getImageKey())
                 .organizerId(event.getOrganizerId())
-                .organizerUsername("") //TODO
+                .organizerUsername(organizerUsername)
                 .createdDate(event.getCreatedDate())
                 .lastModifiedDate(event.getLastModifiedDate())
                 .activityTypes(activityTypes.stream().map(Category::getName).toList())

@@ -30,7 +30,6 @@ public class AssertionUtils {
         assertThat(eventResponse.getCapacity()).isEqualTo(request.getCapacity());
         assertThat(eventResponse.getImageKey()).contains(imageName);
         assertThat(eventResponse.getOrganizerId()).isEqualTo(USER_ID);
-        //assertThat(eventResponse.getOrganizerUsername()).isEqualTo(null); TODO
         assertThat(eventResponse.getCreatedDate()).isNotNull();
         assertThat(eventResponse.getLastModifiedDate()).isNotNull();
         assertThat(eventResponse.getRegistrations()).isEqualTo(registrations);
@@ -51,7 +50,6 @@ public class AssertionUtils {
         assertThat(eventResponse.getCapacity()).isEqualTo(eventEntity.getCapacity());
         assertThat(eventResponse.getImageKey()).contains(eventEntity.getImageKey());
         assertThat(eventResponse.getOrganizerId()).isEqualTo(USER_ID);
-        //assertThat(eventResponse.getOrganizerUsername()).isEqualTo(null); TODO
         assertThat(eventResponse.getCreatedDate()).isNotNull();
         assertThat(eventResponse.getLastModifiedDate()).isNotNull();
         assertThat(eventResponse.getRegistrations()).isEqualTo(registrations);
@@ -64,11 +62,12 @@ public class AssertionUtils {
 
     public static void assertDetailedEventResponse(Event eventEntity, List<Category> categories,
                                                    DetailedEventResponse eventResponse, Integer registrations,
-                                                   boolean isRegistered) {
+                                                   boolean isRegistered, String organizerUsername) {
 
         assertEventResponse(eventEntity, categories, eventResponse, registrations);
 
         assertThat(eventResponse.getIsRegistered()).isEqualTo(isRegistered);
+        assertThat(eventResponse.getOrganizerUsername()).isEqualTo(organizerUsername);
     }
 
     public static void assertEventEntity(
@@ -86,7 +85,6 @@ public class AssertionUtils {
         assertThat(event.getCapacity()).isEqualTo(request.getCapacity());
         assertThat(event.getImageKey()).contains(imageName);
         assertThat(event.getOrganizerId()).isEqualTo(USER_ID);
-        //assertThat(event.getOrganizerUsername()).isEqualTo(null); TODO
         assertThat(event.getCreatedDate()).isNotNull();
         assertThat(event.getLastModifiedDate()).isNotNull();
         assertThat(event.getRegistrations()).isEqualTo(registrations);
@@ -112,7 +110,6 @@ public class AssertionUtils {
         assertThat(actualEvent.getCapacity()).isEqualTo(expectedEvent.getCapacity());
         assertThat(actualEvent.getImageKey()).contains(expectedEvent.getImageKey());
         assertThat(actualEvent.getOrganizerId()).isEqualTo(USER_ID);
-        //assertThat(actualEvent.getOrganizerUsername()).isEqualTo(null); TODO
         assertThat(actualEvent.getCreatedDate()).isNotNull();
         assertThat(actualEvent.getLastModifiedDate()).isNotNull();
         assertThat(actualEvent.getRegistrations()).isEqualTo(expectedEvent.getRegistrations());

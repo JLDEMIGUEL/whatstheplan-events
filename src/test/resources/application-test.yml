@@ -4,3 +4,14 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: localhost
+      client:
+        registration:
+          cognito:
+            client-id: client-id
+            client-secret: client-secret
+        provider:
+          cognito:
+            token-uri: http://localhost:8091/oauth2/token
+
+user-service:
+  url: http://localhost:8090

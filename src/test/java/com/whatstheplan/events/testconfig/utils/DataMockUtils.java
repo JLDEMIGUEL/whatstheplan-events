@@ -1,5 +1,6 @@
 package com.whatstheplan.events.testconfig.utils;
 
+import com.whatstheplan.events.client.user.response.BasicUserResponse;
 import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
 import com.whatstheplan.events.model.entities.Registration;
@@ -92,5 +93,11 @@ public class DataMockUtils {
                 return filename;
             }
         };
+    }
+
+    public static BasicUserResponse generateBasicUserResponse(String username) {
+        return BasicUserResponse.builder()
+                .username(username)
+                .build();
     }
 }

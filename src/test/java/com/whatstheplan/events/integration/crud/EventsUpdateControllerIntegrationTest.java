@@ -222,7 +222,7 @@ class EventsUpdateControllerIntegrationTest extends BaseIntegrationTest {
     void whenANewEventUpdateRequestWhichIsNotOrganizedByHim_thenWillReturnForbidden() {
         // given
         Event event = generateEventEntity();
-        event.setOrganizerId(UUID.randomUUID());
+        event.setOrganizerId(OTHER_USER_ID);
         List<Category> categories = generateEventCategories();
         eventsRepository.insert(event).block();
         categoryRepository.saveAll(categories).collectList().block();

@@ -4,10 +4,13 @@ import com.whatstheplan.events.repository.CategoryRepository;
 import com.whatstheplan.events.repository.EventCategoriesRepository;
 import com.whatstheplan.events.repository.EventsRepository;
 import com.whatstheplan.events.repository.RegistrationRepository;
+import com.whatstheplan.events.testconfig.wiremock.AuthWireMockExtension;
+import com.whatstheplan.events.testconfig.wiremock.UserWireMockExtension;
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,6 +36,9 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 public class BaseIntegrationTest {
 
     public static final UUID USER_ID = UUID.randomUUID();
+    public static final String USERNAME = "username";
+    public final static UUID OTHER_USER_ID = UUID.randomUUID();
+    public static final String OTHER_USERNAME = "other-username";
 
     protected static final SecurityMockServerConfigurers.JwtMutator JWT = mockJwt().jwt(jwt -> jwt
                     .claim("sub", USER_ID)
@@ -41,6 +47,11 @@ public class BaseIntegrationTest {
 
     protected static final SecurityMockServerConfigurers.JwtMutator JWT_NO_ROLE = mockJwt().jwt(jwt -> jwt
             .claim("sub", USER_ID));
+
+    @RegisterExtension
+    protected static UserWireMockExtension userWireMockExtension = new UserWireMockExtension();
+    @RegisterExtension
+    protected static AuthWireMockExtension authWireMockExtension = new AuthWireMockExtension();
 
     @MockitoSpyBean
     protected EventsRepository eventsRepository;
@@ -75,6 +86,10 @@ public class BaseIntegrationTest {
         categoryRepository.deleteAll().block();
         eventCategoriesRepository.deleteAll().block();
         registrationRepository.deleteAll().block();
+
+        authWireMockExtension.stubForToken();
+        userWireMockExtension.stubForUser(USER_ID, USERNAME);
+        userWireMockExtension.stubForUser(OTHER_USER_ID, OTHER_USERNAME);
     }
 
     @AfterAll

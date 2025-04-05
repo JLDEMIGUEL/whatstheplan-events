@@ -1,5 +1,6 @@
 package com.whatstheplan.events.services;
 
+import com.whatstheplan.events.client.user.UserClient;
 import com.whatstheplan.events.exceptions.EventNotFoundException;
 import com.whatstheplan.events.exceptions.EventOrganizerMismatchException;
 import com.whatstheplan.events.exceptions.UploadImageToS3Exception;
@@ -35,6 +36,7 @@ public class EventService {
     private final CategoryRepository categoryRepository;
     private final EventCategoriesRepository eventCategoryRepository;
     private final EventRegistrationService eventRegistrationService;
+    private final UserClient userClient;
 
     public Mono<DetailedEventResponse> findById(UUID eventId) {
         return eventsRepository.findById(eventId)
@@ -47,9 +49,14 @@ public class EventService {
                                                 .flatMap(eventCategory -> categoryRepository.findById(eventCategory.getCategoryId()))
                                                 .collectList(),
                                         eventRegistrationService.isRegistered(userId, eventId),
-                                        (categories, isRegistered) ->
-                                                DetailedEventResponse.fromEntityDetailed(userId, event, categories, isRegistered)
-                                )
+                                        userClient.getUserBasicInfo(event.getOrganizerId())
+                                ).map(tuple ->
+                                        DetailedEventResponse.fromEntityDetailed(
+                                                userId,
+                                                event,
+                                                tuple.getT1(),
+                                                tuple.getT2(),
+                                                tuple.getT3().getUsername()))
                         )
                 )
                 .doOnSuccess(response -> log.info("Returning event response: {}", response));
