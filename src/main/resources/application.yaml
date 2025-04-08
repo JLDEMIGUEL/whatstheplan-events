@@ -37,6 +37,9 @@ aws:
     bucketName: ${S3_BUCKET:}
     region: ${S3_REGION:eu-west-1}
 
+user-service:
+  url: ${USER_SERVICE_URL}
+
 management:
   endpoints:
     web:

@@ -194,7 +194,7 @@ public class EventService {
 
     public Flux<EventResponse> findByUserId(UUID userId) {
         return eventsRepository.findByOrganizerId(userId)
-                .flatMap(event -> eventCategoryRepository.findAllByEventId(event.getId())
+                .flatMapSequential(event -> eventCategoryRepository.findAllByEventId(event.getId())
                         .flatMap(eventCategory -> categoryRepository.findById(eventCategory.getCategoryId()))
                         .collectList()
                         .map(categories -> EventResponse.fromEntity(userId, event, categories)));

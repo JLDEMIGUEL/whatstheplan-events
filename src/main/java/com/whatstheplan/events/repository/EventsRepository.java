@@ -1,6 +1,7 @@
 package com.whatstheplan.events.repository;
 
 import com.whatstheplan.events.model.entities.Event;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
@@ -10,7 +11,11 @@ import java.util.UUID;
 
 public interface EventsRepository extends ReactiveCrudRepository<Event, UUID>, CustomEventRepository {
 
-    Flux<Event> findByOrganizerId(UUID userId);
+    Flux<Event> findByOrganizerId(UUID userId, Sort sort);
+
+    default Flux<Event> findByOrganizerId(UUID userId) {
+        return findByOrganizerId(userId, Sort.by(Sort.Direction.ASC, "dateTime"));
+    }
 
     @Query("""
             INSERT INTO event (

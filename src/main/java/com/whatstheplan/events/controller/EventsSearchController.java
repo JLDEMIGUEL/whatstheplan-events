@@ -26,7 +26,6 @@ public class EventsSearchController {
         return Mono.just(eventFilterRequest)
                 .doOnNext(request -> log.info("Received search filter request: {}", request))
                 .flatMap(request -> eventSearchService.searchEvents(request)
-                        .collectList()
                         .map(ResponseEntity::ok));
     }
 

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.UUID;
 
+import static com.whatstheplan.events.testconfig.utils.DataMockUtils.TODAY;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventEntity;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,7 +19,7 @@ class MyEventsRegistrationControllerIntegrationTest extends BaseIntegrationTest 
     void whenAMyRegisteredEventsRequestOnAlreadyRegisteredEvent_thenShouldReturnBadRequest() {
         // given
         Event event1 = generateEventEntity();
-        Event event2 = generateEventEntity();
+        Event event2 = generateEventEntity().toBuilder().dateTime(TODAY.plusDays(1).withNano(0)).build();
 
         eventsRepository.insert(event1).block();
         registrationRepository.save(Registration.builder()
@@ -48,6 +49,9 @@ class MyEventsRegistrationControllerIntegrationTest extends BaseIntegrationTest 
                 .consumeWith(response -> {
                     List<EventResponse> responses = response.getResponseBody();
                     assertThat(responses).hasSize(2);
+                    assertThat(responses)
+                            .extracting(EventResponse::getDateTime)
+                            .isSorted();
                 });
     }
 

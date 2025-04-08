@@ -10,8 +10,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static com.whatstheplan.events.testconfig.utils.AssertionUtils.assertEventResponse;
+import static com.whatstheplan.events.testconfig.utils.DataMockUtils.TODAY;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventCategories;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventEntity;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class MyEventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
 
@@ -19,7 +21,7 @@ class MyEventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
     void whenAMyOrganizedEventsRequest_thenShouldReturnOkEventResponse() {
         // given
         Event event1 = generateEventEntity();
-        Event event2 = generateEventEntity();
+        Event event2 = generateEventEntity().toBuilder().dateTime(TODAY.plusDays(1).withNano(0)).build();
         List<Category> categories = generateEventCategories();
         eventsRepository.insert(event1).block();
         eventsRepository.insert(event2).block();
@@ -41,8 +43,11 @@ class MyEventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
                 .expectBodyList(EventResponse.class)
                 .hasSize(2)
                 .consumeWith(response -> {
-                    assertEventResponse(event1, categories, response.getResponseBody().get(0), event1.getRegistrations());
-                    assertEventResponse(event2, categories, response.getResponseBody().get(1), event2.getRegistrations());
+                    assertThat(response.getResponseBody())
+                            .extracting(EventResponse::getDateTime)
+                            .isSorted();
+                    assertEventResponse(event1, categories, response.getResponseBody().get(1), event1.getRegistrations());
+                    assertEventResponse(event2, categories, response.getResponseBody().get(0), event2.getRegistrations());
                 });
     }
 

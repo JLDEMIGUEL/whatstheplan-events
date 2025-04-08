@@ -18,7 +18,7 @@ import java.io.Serializable;
 import java.time.Instant;
 
 @Data
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(value = {"createdDate", "lastModifiedDate"}, allowGetters = true)

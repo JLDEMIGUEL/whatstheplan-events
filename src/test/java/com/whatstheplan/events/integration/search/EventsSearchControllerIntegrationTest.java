@@ -77,6 +77,9 @@ class EventsSearchControllerIntegrationTest extends BaseIntegrationTest {
                 .expectBodyList(EventResponse.class)
                 .value(responses -> {
                     assertThat(responses).hasSize(expectedSize);
+                    assertThat(responses)
+                            .extracting(EventResponse::getDateTime)
+                            .isSorted();
                     assertions.accept(responses);
                 });
     }

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -76,6 +77,9 @@ public class EventRegistrationService {
                                                 EventResponse.fromEntity(userId, event, categories)))))
                         .toList())
                 .map(Flux::concat)
-                .flatMap(Flux::collectList);
+                .flatMap(Flux::collectList)
+                .map(eventResponses -> eventResponses.stream()
+                        .sorted(Comparator.comparing(EventResponse::getDateTime))
+                        .toList());
     }
 }
