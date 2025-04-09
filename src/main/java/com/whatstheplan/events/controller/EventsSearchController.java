@@ -5,14 +5,14 @@ import com.whatstheplan.events.model.response.EventResponse;
 import com.whatstheplan.events.services.EventSearchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 @Slf4j
 @RestController
@@ -22,11 +22,12 @@ public class EventsSearchController {
     private final EventSearchService eventSearchService;
 
     @GetMapping
-    public Mono<ResponseEntity<List<EventResponse>>> searchWithFilters(@ModelAttribute EventFilterRequest eventFilterRequest) {
-        return Mono.just(eventFilterRequest)
-                .doOnNext(request -> log.info("Received search filter request: {}", request))
-                .flatMap(request -> eventSearchService.searchEvents(request)
-                        .map(ResponseEntity::ok));
+    public Mono<Page<EventResponse>> searchWithFilters(
+            @ModelAttribute EventFilterRequest eventFilterRequest,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size) {
+        log.info("Received search filter request: {}", eventFilterRequest);
+        return eventSearchService.searchEvents(eventFilterRequest, PageRequest.of(page, size));
     }
 
 }

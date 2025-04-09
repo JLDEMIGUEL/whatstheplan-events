@@ -19,7 +19,9 @@ public class EventFilterRequest {
 
     private String location;
 
+    @Builder.Default
     private Duration durationFrom = Duration.ZERO;
+    @Builder.Default
     private Duration durationTo = Duration.ofHours(24);
 
     @Builder.Default

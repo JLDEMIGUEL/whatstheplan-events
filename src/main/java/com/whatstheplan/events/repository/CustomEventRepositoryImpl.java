@@ -4,8 +4,10 @@ import com.whatstheplan.events.model.request.EventFilterRequest;
 import com.whatstheplan.events.model.response.EventResponse;
 import io.r2dbc.postgresql.codec.Interval;
 import io.r2dbc.spi.Parameters;
+import org.springframework.data.domain.Pageable;
 import org.springframework.r2dbc.core.DatabaseClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -25,7 +27,7 @@ public class CustomEventRepositoryImpl implements CustomEventRepository {
     }
 
     @Override
-    public Flux<EventResponse> searchEvents(EventFilterRequest filter) {
+    public Flux<EventResponse> searchEvents(EventFilterRequest filter, Pageable pageable) {
         StringBuilder sql = new StringBuilder("""
                     SELECT
                         e.*,
@@ -36,33 +38,16 @@ public class CustomEventRepositoryImpl implements CustomEventRepository {
                     WHERE 1=1
                 """);
 
-        Map<String, Object> params = new HashMap<>();
+        getQueryFilters(filter, sql);
 
-        if (filter.getLocation() != null && !filter.getLocation().isEmpty()) {
-            sql.append(" AND e.location = :location");
-            params.put("location", filter.getLocation());
-        }
-        if (filter.getDurationFrom() != null) {
-            sql.append(" AND e.duration >= :durationFrom");
-            params.put("durationFrom", Interval.from(filter.getDurationFrom()));
-        }
-        if (filter.getDurationTo() != null) {
-            sql.append(" AND e.duration <= :durationTo");
-            params.put("durationTo", Interval.from(filter.getDurationTo()));
-        }
-        if (filter.getActivityTypes() != null && !filter.getActivityTypes().isEmpty()) {
-            sql.append(" AND e.id IN (SELECT ec.event_id FROM event_categories ec " +
-                    "JOIN category c ON ec.category_id = c.id WHERE c.name IN (:categories))");
-            params.put("categories", Parameters.in(filter.getActivityTypes()));
-        }
-
-        sql.append(" AND e.date_time >= :after");
-        params.put("after", filter.getDateTimeFrom());
-        sql.append(" AND e.date_time <= :before");
-        params.put("before", filter.getDateTimeTo());
+        Map<String, Object> params = getQueryFilters(filter, sql);
 
         sql.append(" GROUP BY e.id");
         sql.append(" ORDER BY e.date_time ASC");
+
+        sql.append(" LIMIT :limit OFFSET :offset");
+        params.put("limit", pageable.getPageSize());
+        params.put("offset", pageable.getOffset());
 
         return databaseClient.sql(sql.toString())
                 .bindValues(params)
@@ -91,4 +76,49 @@ public class CustomEventRepositoryImpl implements CustomEventRepository {
                 })
                 .all();
     }
+
+
+    public Mono<Long> countEvents(EventFilterRequest filter) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT e.id) FROM event e ");
+        sql.append("LEFT JOIN event_categories ec ON e.id = ec.event_id ");
+        sql.append("LEFT JOIN category c ON ec.category_id = c.id ");
+        sql.append("WHERE 1=1 ");
+
+        Map<String, Object> params = getQueryFilters(filter, sql);
+
+        return databaseClient.sql(sql.toString())
+                .bindValues(params)
+                .map(row -> row.get("count", Long.class))
+                .one();
+    }
+
+    private Map<String, Object> getQueryFilters(EventFilterRequest filter, StringBuilder sql) {
+        Map<String, Object> params = new HashMap<>();
+
+        if (filter.getLocation() != null && !filter.getLocation().isEmpty()) {
+            sql.append(" AND e.location = :location");
+            params.put("location", filter.getLocation());
+        }
+        if (filter.getDurationFrom() != null) {
+            sql.append(" AND e.duration >= :durationFrom");
+            params.put("durationFrom", Interval.from(filter.getDurationFrom()));
+        }
+        if (filter.getDurationTo() != null) {
+            sql.append(" AND e.duration <= :durationTo");
+            params.put("durationTo", Interval.from(filter.getDurationTo()));
+        }
+        if (filter.getActivityTypes() != null && !filter.getActivityTypes().isEmpty()) {
+            sql.append(" AND e.id IN (SELECT ec.event_id FROM event_categories ec " +
+                    "JOIN category c ON ec.category_id = c.id WHERE c.name IN (:categories))");
+            params.put("categories", Parameters.in(filter.getActivityTypes()));
+        }
+
+        sql.append(" AND e.date_time >= :after");
+        params.put("after", filter.getDateTimeFrom());
+        sql.append(" AND e.date_time <= :before");
+        params.put("before", filter.getDateTimeTo());
+
+        return params;
+    }
+
 }

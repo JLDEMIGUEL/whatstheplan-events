@@ -1,5 +1,9 @@
 package com.whatstheplan.events.integration.search;
 
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
 import com.whatstheplan.events.model.entities.EventCategories;
@@ -13,6 +17,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -22,6 +30,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.TODAY;
@@ -74,14 +84,64 @@ class EventsSearchControllerIntegrationTest extends BaseIntegrationTest {
                         .build())
                 .exchange()
                 .expectStatus().isOk()
-                .expectBodyList(EventResponse.class)
-                .value(responses -> {
+                .expectBody(new ParameterizedTypeReference<RestPage<EventResponse>>() {
+                })
+                .value(page -> {
+                    assertThat(page.getPageable().getPageNumber()).isZero();
+                    assertThat(page.getTotalElements()).isGreaterThanOrEqualTo(expectedSize);
+
+                    List<EventResponse> responses = page.getContent();
                     assertThat(responses).hasSize(expectedSize);
                     assertThat(responses)
                             .extracting(EventResponse::getDateTime)
                             .isSorted();
                     assertions.accept(responses);
                 });
+    }
+
+    @ParameterizedTest
+    @MethodSource("providePaginationTestCases")
+    void searchWithPagination_ParameterizedTest(int page, int size, int expectedContentSize, long totalElements) {
+        List<Event> eventDataList = generateTestEvents(15);
+        eventDataList.forEach(event -> eventsRepository.insert(event).block());
+
+        webTestClient.mutateWith(JWT)
+                .get()
+                .uri(uriBuilder -> uriBuilder.path("/events/search")
+                        .queryParam("page", page)
+                        .queryParam("size", size)
+                        .build())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(new ParameterizedTypeReference<RestPage<EventResponse>>() {
+                })
+                .value(pageResponse -> {
+                    assertThat(pageResponse.getNumber()).isEqualTo(page);
+                    assertThat(pageResponse.getSize()).isEqualTo(size);
+                    assertThat(pageResponse.getTotalElements()).isEqualTo(totalElements);
+                    assertThat(pageResponse.getContent()).hasSize(expectedContentSize);
+
+                    assertThat(pageResponse.getContent())
+                            .extracting(EventResponse::getDateTime)
+                            .isSorted();
+                });
+    }
+
+    private static Stream<Arguments> providePaginationTestCases() {
+        return Stream.of(
+                // page | size | expectedContentSize | totalElements
+                Arguments.of(0, 5, 5, 15),    // First page
+                Arguments.of(1, 5, 5, 15),    // Second page
+                Arguments.of(2, 5, 5, 15),    // Third page
+                Arguments.of(3, 5, 0, 15),    // Page beyond data range
+                Arguments.of(0, 20, 15, 15)  // Page size larger than dataset
+        );
+    }
+
+    private List<Event> generateTestEvents(int count) {
+        return IntStream.range(0, count)
+                .mapToObj(i -> createEvent(e -> e.dateTime(TODAY.plusDays(1).plusMinutes(i))))
+                .collect(Collectors.toList());
     }
 
     @Test
@@ -348,5 +408,20 @@ class EventsSearchControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     record EventData(Event event, List<String> categories) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true, value = {"pageable"})
+    public static class RestPage<T> extends PageImpl<T> {
+        @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+        public RestPage(@JsonProperty("content") List<T> content,
+                        @JsonProperty("number") int page,
+                        @JsonProperty("size") int size,
+                        @JsonProperty("totalElements") long total) {
+            super(content, PageRequest.of(page, size), total);
+        }
+
+        public RestPage(Page<T> page) {
+            super(page.getContent(), page.getPageable(), page.getTotalElements());
+        }
     }
 }
