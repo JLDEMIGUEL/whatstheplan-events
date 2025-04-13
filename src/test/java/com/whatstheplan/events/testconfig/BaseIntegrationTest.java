@@ -1,9 +1,11 @@
 package com.whatstheplan.events.testconfig;
 
+import com.whatstheplan.events.client.user.response.BasicUserResponse;
 import com.whatstheplan.events.repository.CategoryRepository;
 import com.whatstheplan.events.repository.EventCategoriesRepository;
 import com.whatstheplan.events.repository.EventsRepository;
 import com.whatstheplan.events.repository.RegistrationRepository;
+import com.whatstheplan.events.testconfig.redis.EmbeddedRedisConfig;
 import com.whatstheplan.events.testconfig.wiremock.AuthWireMockExtension;
 import com.whatstheplan.events.testconfig.wiremock.UserWireMockExtension;
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
@@ -14,6 +16,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.annotation.DirtiesContext;
@@ -33,6 +37,7 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 @DirtiesContext
 @ActiveProfiles("test")
 @AutoConfigureWebTestClient
+@Import(EmbeddedRedisConfig.class)
 public class BaseIntegrationTest {
 
     public static final UUID USER_ID = UUID.randomUUID();
@@ -68,6 +73,12 @@ public class BaseIntegrationTest {
     @Autowired
     protected WebTestClient webTestClient;
 
+    @Autowired
+    protected ReactiveRedisTemplate<String, BasicUserResponse> userReactiveRedisTemplate;
+
+    @Autowired
+    protected ReactiveRedisTemplate<String, Boolean> booleanReactiveRedisTemplate;
+
     private static EmbeddedPostgres pg;
 
 
@@ -86,6 +97,8 @@ public class BaseIntegrationTest {
         categoryRepository.deleteAll().block();
         eventCategoriesRepository.deleteAll().block();
         registrationRepository.deleteAll().block();
+        userReactiveRedisTemplate.execute(connection -> connection.serverCommands().flushAll()).blockLast();
+        booleanReactiveRedisTemplate.execute(connection -> connection.serverCommands().flushAll()).blockLast();
 
         authWireMockExtension.stubForToken();
         userWireMockExtension.stubForUser(USER_ID, USERNAME);

@@ -37,6 +37,11 @@ aws:
     bucketName: ${S3_BUCKET:}
     region: ${S3_REGION:eu-west-1}
 
+redis:
+  host: ${REDIS_HOST}
+  port: 6379
+  password: ${REDIS_PASSWORD}
+
 user-service:
   url: ${USER_SERVICE_URL}
 

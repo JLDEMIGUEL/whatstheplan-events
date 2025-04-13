@@ -13,5 +13,10 @@ spring:
           cognito:
             token-uri: http://localhost:8091/oauth2/token
 
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+
 user-service:
   url: http://localhost:8090

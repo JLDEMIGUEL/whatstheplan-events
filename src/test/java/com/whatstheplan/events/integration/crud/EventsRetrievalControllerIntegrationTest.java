@@ -1,5 +1,6 @@
 package com.whatstheplan.events.integration.crud;
 
+import com.whatstheplan.events.client.user.response.BasicUserResponse;
 import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
 import com.whatstheplan.events.model.entities.EventCategories;
@@ -13,9 +14,15 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.whatstheplan.events.client.user.UserClient.USER_REDIS_KEY;
+import static com.whatstheplan.events.services.EventRegistrationService.IS_REGISTERED_KEY;
 import static com.whatstheplan.events.testconfig.utils.AssertionUtils.assertDetailedEventResponse;
+import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateBasicUserResponse;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventCategories;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventEntity;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateRegistration;
@@ -48,10 +55,46 @@ class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
                 .expectStatus().isOk()
                 .expectBodyList(DetailedEventResponse.class)
                 .hasSize(1)
-                .consumeWith(response -> {
-                    assertDetailedEventResponse(event, categories, response.getResponseBody().get(0),
-                            event.getRegistrations(), isRegistered, USERNAME);
-                });
+                .consumeWith(response ->
+                        assertDetailedEventResponse(event, categories, response.getResponseBody().get(0),
+                                event.getRegistrations(), isRegistered, USERNAME));
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideEventEntities")
+    void whenRequestingEvent_thenFirstCallShouldHitServiceAndNextFromCache(
+            Event event,
+            List<Category> categories,
+            boolean isRegistered) {
+        // given
+        eventsRepository.insert(event).block();
+        categoryRepository.saveAll(categories).collectList().block();
+        eventCategoriesRepository.saveAll(
+                        categories.stream().map(c -> EventCategories.from(event.getId(), c.getId())).toList())
+                .collectList().block();
+        if (isRegistered) {
+            registrationRepository.save(generateRegistration(event.getId())).block();
+        }
+
+        // when
+        IntStream.range(0, 3).forEach(i ->
+                webTestClient
+                        .mutateWith(JWT)
+                        .get()
+                        .uri("/events/" + event.getId())
+                        .exchange()
+                        .expectStatus().isOk());
+
+        // then
+        userWireMockExtension.verify(1,
+                getRequestedFor(urlEqualTo("/users-info/" + event.getOrganizerId())));
+        BasicUserResponse userCache = userReactiveRedisTemplate.opsForValue()
+                .get(USER_REDIS_KEY + event.getOrganizerId()).block();
+        assertThat(userCache).isEqualTo(generateBasicUserResponse(USERNAME));
+
+        Boolean booleanCache = booleanReactiveRedisTemplate.opsForValue()
+                .get(IS_REGISTERED_KEY + USER_ID + ":" + event.getId()).block();
+        assertThat(booleanCache).isEqualTo(isRegistered);
     }
 
     @Test

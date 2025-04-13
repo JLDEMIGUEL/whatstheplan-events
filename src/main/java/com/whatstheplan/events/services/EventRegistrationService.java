@@ -12,6 +12,7 @@ import com.whatstheplan.events.repository.RegistrationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import static com.whatstheplan.events.config.RedisConfig.CACHE_TTL;
 import static com.whatstheplan.events.utils.Utils.getUserId;
 
 @Slf4j
@@ -28,15 +30,29 @@ import static com.whatstheplan.events.utils.Utils.getUserId;
 @RequiredArgsConstructor
 public class EventRegistrationService {
 
+    public static final String IS_REGISTERED_KEY = "registration:exists:";
+
     private final EventsRepository eventsRepository;
     private final CategoryRepository categoryRepository;
     private final EventCategoriesRepository eventCategoryRepository;
     private final RegistrationRepository registrationRepository;
+    private final ReactiveRedisTemplate<String, Boolean> booleanReactiveRedisTemplate;
 
     public Mono<Boolean> isRegistered(UUID user, UUID eventId) {
-        return registrationRepository.findByUserIdAndEventId(user, eventId)
-                .map(registration -> true)
-                .defaultIfEmpty(false);
+        log.info("Checking if user {} is registered to event {}", user, eventId);
+        String cacheKey = IS_REGISTERED_KEY + user + ":" + eventId;
+        return booleanReactiveRedisTemplate.opsForValue()
+                .get(cacheKey)
+                .map(Boolean::valueOf)
+                .doOnNext(val -> log.info("isRegistered cache hit for key {}", cacheKey))
+                .switchIfEmpty(
+                        registrationRepository.findByUserIdAndEventId(user, eventId)
+                                .map(reg -> true).defaultIfEmpty(false)
+                                .flatMap(result ->
+                                        booleanReactiveRedisTemplate.opsForValue()
+                                                .set(cacheKey, result, CACHE_TTL)
+                                                .thenReturn(result))
+                );
     }
 
     public Mono<Void> register(UUID user, UUID eventId) {
