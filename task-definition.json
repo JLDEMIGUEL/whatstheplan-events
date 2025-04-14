@@ -1,5 +1,5 @@
 {
-  "family": "whatstheplan-<MICROSERVICE_NAME>-td",
+  "family": "whatstheplan-<MICROSERVICE_NAME>",
   "executionRoleArn": "arn:aws:iam::<AWS_ACCOUNT_ID>:role/ecsTaskExecutionRole",
   "networkMode": "awsvpc",
   "containerDefinitions": [
@@ -18,10 +18,62 @@
       ],
       "essential": true,
       "environment": [],
-      "environmentFiles": [],
       "mountPoints": [],
       "volumesFrom": [],
-      "ulimits": [],
+      "secrets": [
+        {
+          "name": "AUTH_SERVER_URL",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/cognito/auth-url"
+        },
+        {
+          "name": "AUTH_CLIENT_ID",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/cognito/client-id"
+        },
+        {
+          "name": "AUTH_CLIENT_SECRET",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/cognito/client-secret"
+        },
+        {
+          "name": "AUTH_TOKEN_URL",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/cognito/token-url"
+        },
+        {
+          "name": "DB_HOST",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/rds/host"
+        },
+        {
+          "name": "DB_PASSWORD",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/rds/password"
+        },
+        {
+          "name": "DB_USER",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/rds/user"
+        },
+        {
+          "name": "S3_ACCESS_KEY",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/s3/access-key"
+        },
+        {
+          "name": "S3_SECRET_KEY",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/s3/secret-key"
+        },
+        {
+          "name": "S3_BUCKET",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/s3/bucket"
+        },
+        {
+          "name": "S3_REGION",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/s3/region"
+        },
+        {
+          "name": "REDIS_HOST",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/redis/host"
+        },
+        {
+          "name": "REDIS_PASSWORD",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/redis/password"
+        }
+      ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
