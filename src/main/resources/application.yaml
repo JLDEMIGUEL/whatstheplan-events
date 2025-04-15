@@ -42,6 +42,7 @@ redis:
   port: 6379
   username: ${REDIS_USERNAME}
   password: ${REDIS_PASSWORD}
+  ssl: true
 
 user-service:
   url: http://users:8080
