@@ -70,6 +70,10 @@
           "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/redis/host"
         },
         {
+          "name": "REDIS_USERNAME",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/redis/username"
+        },
+        {
           "name": "REDIS_PASSWORD",
           "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/redis/password"
         }

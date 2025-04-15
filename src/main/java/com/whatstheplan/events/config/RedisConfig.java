@@ -32,13 +32,17 @@ public class RedisConfig {
     @Value("${redis.port}")
     private int redisPort;
 
-    @Value("${redis.password}")
+    @Value("${redis.username:}")
+    private String redisUsername;
+
+    @Value("${redis.password:}")
     private String redisPassword;
 
     @Bean
     public ReactiveRedisConnectionFactory reactiveRedisConnectionFactory() {
         RedisPassword password = RedisPassword.of(redisPassword);
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(redisHost, redisPort);
+        config.setUsername(redisUsername);
         config.setPassword(password);
         return new LettuceConnectionFactory(config);
     }
