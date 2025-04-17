@@ -18,7 +18,7 @@ import static com.whatstheplan.events.config.RedisConfig.CACHE_TTL;
 @RequiredArgsConstructor
 public class UserClient {
 
-    public static final String USER_REDIS_KEY = "user:basic:";
+    public static final String USER_REDIS_KEY = "userBasicInfoCache::";
     private final WebClient webClient;
     private final ReactiveRedisTemplate<String, BasicUserResponse> userReactiveRedisTemplate;
 

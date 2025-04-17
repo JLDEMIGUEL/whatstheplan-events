@@ -56,6 +56,7 @@ public class EventRegistrationService {
     }
 
     public Mono<Void> register(UUID user, UUID eventId) {
+        String cacheKey = IS_REGISTERED_KEY + user + ":" + eventId;
         return eventsRepository.findById(eventId)
                 .doOnSuccess(event -> log.info("Found event with id {} and data {}", eventId, event))
                 .switchIfEmpty(Mono.error(new EventNotFoundException("Event not found with id: " + eventId)))
@@ -74,6 +75,7 @@ public class EventRegistrationService {
                         .doOnSuccess(r -> log.info("Successfully saved registration: {}", r))
                         .then(eventsRepository.incrementRegistrations(eventId))
                         .doOnSuccess(e -> log.info("Updated event {} registrations to {}", eventId, e.getRegistrations()))
+                        .then(booleanReactiveRedisTemplate.opsForValue().set(cacheKey, true, CACHE_TTL))
                         .then());
     }
 

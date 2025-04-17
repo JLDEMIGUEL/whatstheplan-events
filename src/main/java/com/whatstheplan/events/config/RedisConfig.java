@@ -24,7 +24,7 @@ import java.time.Duration;
 })
 public class RedisConfig {
 
-    public static final Duration CACHE_TTL = Duration.ofMinutes(10);
+    public static final Duration CACHE_TTL = Duration.ofMinutes(1);
 
 
     @Value("${redis.host}")
