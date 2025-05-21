@@ -76,6 +76,18 @@
         {
           "name": "REDIS_PASSWORD",
           "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/redis/password"
+        },
+        {
+          "name": "RABBITMQ_HOST",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/rabbitmq/host"
+        },
+        {
+          "name": "RABBITMQ_USERNAME",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/rabbitmq/username"
+        },
+        {
+          "name": "RABBITMQ_PASSWORD",
+          "valueFrom": "arn:aws:ssm:eu-west-1:<AWS_ACCOUNT_ID>:parameter/whatstheplan/rabbitmq/password"
         }
       ],
       "logConfiguration": {

@@ -32,6 +32,7 @@ public class EventRegistrationService {
 
     public static final String IS_REGISTERED_KEY = "registration:exists:";
 
+    private final EmailService emailService;
     private final EventsRepository eventsRepository;
     private final CategoryRepository categoryRepository;
     private final EventCategoriesRepository eventCategoryRepository;
@@ -60,23 +61,26 @@ public class EventRegistrationService {
         return eventsRepository.findById(eventId)
                 .doOnSuccess(event -> log.info("Found event with id {} and data {}", eventId, event))
                 .switchIfEmpty(Mono.error(new EventNotFoundException("Event not found with id: " + eventId)))
-                .flatMap(event -> Objects.equals(event.getRegistrations(), event.getCapacity()) ?
-                        Mono.error(new EventFullException("The event has reached its maximum capacity."))
-                        : Mono.just(event))
-                .then(registrationRepository.save(
-                                Registration.builder()
-                                        .id(UUID.randomUUID())
-                                        .userId(user)
-                                        .eventId(eventId)
-                                        .isNew(true)
-                                        .build())
-                        .onErrorResume(DuplicateKeyException.class, e ->
-                                Mono.error(new DuplicateRegistrationException("User already registered")))
-                        .doOnSuccess(r -> log.info("Successfully saved registration: {}", r))
-                        .then(eventsRepository.incrementRegistrations(eventId))
-                        .doOnSuccess(e -> log.info("Updated event {} registrations to {}", eventId, e.getRegistrations()))
-                        .then(booleanReactiveRedisTemplate.opsForValue().set(cacheKey, true, CACHE_TTL))
-                        .then());
+                .flatMap(event -> {
+                    if (Objects.equals(event.getRegistrations(), event.getCapacity())) {
+                        return Mono.error(new EventFullException("The event has reached its maximum capacity."));
+                    }
+                    return registrationRepository.save(
+                                    Registration.builder()
+                                            .id(UUID.randomUUID())
+                                            .userId(user)
+                                            .eventId(eventId)
+                                            .isNew(true)
+                                            .build())
+                            .onErrorResume(DuplicateKeyException.class, e ->
+                                    Mono.error(new DuplicateRegistrationException("User already registered")))
+                            .doOnSuccess(r -> log.info("Successfully saved registration: {}", r))
+                            .then(eventsRepository.incrementRegistrations(eventId))
+                            .doOnSuccess(e -> log.info("Updated event {} registrations to {}", eventId, e.getRegistrations()))
+                            .then(emailService.sendSuccessfulRegistrationEmail(user, event))
+                            .then(booleanReactiveRedisTemplate.opsForValue().set(cacheKey, true, CACHE_TTL))
+                            .then();
+                });
     }
 
     public Mono<List<EventResponse>> getRegisteredEvents(UUID user) {
@@ -99,5 +103,11 @@ public class EventRegistrationService {
                 .map(eventResponses -> eventResponses.stream()
                         .sorted(Comparator.comparing(EventResponse::getDateTime))
                         .toList());
+    }
+
+    public Mono<List<UUID>> getRegisteredUsers(UUID eventId) {
+        return registrationRepository.findAllByEventId(eventId)
+                .map(Registration::getUserId)
+                .collectList();
     }
 }

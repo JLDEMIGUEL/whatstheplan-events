@@ -1,5 +1,6 @@
 package com.whatstheplan.events.integration.registration;
 
+import com.whatstheplan.events.model.email.SuccessfulRegistrationEmail;
 import com.whatstheplan.events.model.entities.Event;
 import com.whatstheplan.events.model.entities.Registration;
 import com.whatstheplan.events.model.response.ErrorResponse;
@@ -9,13 +10,14 @@ import org.junit.jupiter.api.Test;
 import java.util.UUID;
 
 import static com.whatstheplan.events.services.EventRegistrationService.IS_REGISTERED_KEY;
+import static com.whatstheplan.events.testconfig.rabbit.RabbitUtils.poll;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventEntity;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class EventsRegistrationControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
-    void whenANewEventRegistrationRequest_thenShouldReturnOkEventResponse() {
+    void whenANewEventRegistrationRequest_thenShouldReturnOkEventResponseAndSendEmail() {
         // given
         Event event = generateEventEntity();
         eventsRepository.insert(event).block();
@@ -39,6 +41,12 @@ class EventsRegistrationControllerIntegrationTest extends BaseIntegrationTest {
                     Boolean booleanCache = booleanReactiveRedisTemplate.opsForValue()
                             .get(IS_REGISTERED_KEY + USER_ID + ":" + event.getId()).block();
                     assertThat(booleanCache).isTrue();
+
+                    SuccessfulRegistrationEmail mail = poll(output, "mail", SuccessfulRegistrationEmail.class);
+                    assertThat(mail).isNotNull();
+                    assertThat(mail.getEmail()).isEqualTo(EMAIL);
+                    assertThat(mail.getUsername()).isEqualTo(USERNAME);
+                    assertThat(mail.getEvent().getId()).isEqualTo(event.getId());
                 });
     }
 

@@ -90,7 +90,7 @@ class EventsRetrievalControllerIntegrationTest extends BaseIntegrationTest {
                 getRequestedFor(urlEqualTo("/users-info/" + event.getOrganizerId())));
         BasicUserResponse userCache = userReactiveRedisTemplate.opsForValue()
                 .get(USER_REDIS_KEY + event.getOrganizerId()).block();
-        assertThat(userCache).isEqualTo(generateBasicUserResponse(USERNAME));
+        assertThat(userCache).isEqualTo(generateBasicUserResponse(USERNAME, "email@email.com"));
 
         Boolean booleanCache = booleanReactiveRedisTemplate.opsForValue()
                 .get(IS_REGISTERED_KEY + USER_ID + ":" + event.getId()).block();

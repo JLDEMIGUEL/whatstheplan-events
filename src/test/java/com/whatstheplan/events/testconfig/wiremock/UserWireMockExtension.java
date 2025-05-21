@@ -19,8 +19,8 @@ public class UserWireMockExtension extends WireMockExtension {
         super(newInstance().options(wireMockConfig().port(PORT)));
     }
 
-    public void stubForUser(UUID userId, String username) {
-        BasicUserResponse response = generateBasicUserResponse(username);
+    public void stubForUser(UUID userId, String username, String email) {
+        BasicUserResponse response = generateBasicUserResponse(username, email);
         stubFor(get(urlEqualTo("/users-info/" + userId))
                 .willReturn(okForJson(response)));
     }

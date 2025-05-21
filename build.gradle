@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.4.2'
+    id 'org.springframework.boot' version '3.4.5'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'jacoco'
 }
@@ -41,6 +41,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
 
+    implementation 'org.springframework.cloud:spring-cloud-starter-stream-rabbit'
+    implementation 'org.springframework.cloud:spring-cloud-stream-binder-rabbit'
+
     implementation 'org.postgresql:r2dbc-postgresql:1.0.7.RELEASE'
     implementation 'org.postgresql:postgresql:42.7.4'
     implementation 'org.flywaydb:flyway-core'
@@ -56,6 +59,8 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.cloud:spring-cloud-contract-verifier'
+    testImplementation 'org.springframework.cloud:spring-cloud-stream-test-support'
+    testImplementation 'org.springframework.cloud:spring-cloud-stream-test-binder'
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -80,5 +85,16 @@ tasks.named('test') {
         throw new GradleException("byte-buddy-agent JAR not found in test runtime classpath")
     }
 }
+
+tasks.jacocoTestReport {
+    dependsOn test
+    reports {
+        html.required = true
+    }
+    sourceDirectories.setFrom(files(sourceSets.main.allSource.srcDirs))
+    classDirectories.setFrom(files(sourceSets.main.output))
+    executionData.setFrom(fileTree(buildDir).include("/jacoco/test.exec"))
+}
+
 
 build.dependsOn jacocoTestReport

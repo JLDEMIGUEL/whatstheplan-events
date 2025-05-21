@@ -12,4 +12,6 @@ public interface RegistrationRepository extends ReactiveCrudRepository<Registrat
     Mono<Registration> findByUserIdAndEventId(UUID userId, UUID eventId);
 
     Flux<Registration> findAllByUserId(UUID userId);
+
+    Flux<Registration> findAllByEventId(UUID userId);
 }

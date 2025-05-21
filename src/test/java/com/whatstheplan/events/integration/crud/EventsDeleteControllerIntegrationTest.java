@@ -1,8 +1,10 @@
 package com.whatstheplan.events.integration.crud;
 
+import com.whatstheplan.events.model.email.EventCancellationEmail;
 import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
 import com.whatstheplan.events.model.entities.EventCategories;
+import com.whatstheplan.events.model.entities.Registration;
 import com.whatstheplan.events.model.response.ErrorResponse;
 import com.whatstheplan.events.testconfig.BaseIntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -18,6 +20,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
+import static com.whatstheplan.events.testconfig.rabbit.RabbitUtils.poll;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventCategories;
 import static com.whatstheplan.events.testconfig.utils.DataMockUtils.generateEventEntity;
 import static com.whatstheplan.events.testconfig.utils.S3MockUtils.mockS3DeleteObject;
@@ -34,12 +37,24 @@ class EventsDeleteControllerIntegrationTest extends BaseIntegrationTest {
 
     @ParameterizedTest
     @MethodSource("provideEventEntities")
-    void whenANewEventDeleteRequest_thenShouldDeleteEventFromDatabaseAndImage(
+    void whenANewEventDeleteRequest_thenShouldDeleteEventFromDatabaseAndImageAndSendEmail(
             Event event,
             List<Category> categories) {
         // given
         eventsRepository.insert(event).block();
         categoryRepository.saveAll(categories).collectList().block();
+        registrationRepository.save(Registration.builder()
+                .id(UUID.randomUUID())
+                .userId(USER_ID)
+                .eventId(event.getId())
+                .isNew(true)
+                .build()).block();
+        registrationRepository.save(Registration.builder()
+                .id(UUID.randomUUID())
+                .userId(OTHER_USER_ID)
+                .eventId(event.getId())
+                .isNew(true)
+                .build()).block();
 
         mockS3DeleteObject(s3Client);
 
@@ -56,6 +71,18 @@ class EventsDeleteControllerIntegrationTest extends BaseIntegrationTest {
 
         verify(s3Client, times(1))
                 .deleteObject(any(DeleteObjectRequest.class));
+
+        EventCancellationEmail mail1 = poll(output, "mail", EventCancellationEmail.class);
+        assertThat(mail1).isNotNull();
+        assertThat(mail1.getEmail()).isEqualTo(EMAIL);
+        assertThat(mail1.getUsername()).isEqualTo(USERNAME);
+        assertThat(mail1.getEvent().getId()).isEqualTo(event.getId());
+
+        EventCancellationEmail mail2 = poll(output, "mail", EventCancellationEmail.class);
+        assertThat(mail2).isNotNull();
+        assertThat(mail2.getEmail()).isEqualTo(OTHER_EMAIL);
+        assertThat(mail2.getUsername()).isEqualTo(OTHER_USERNAME);
+        assertThat(mail2.getEvent().getId()).isEqualTo(event.getId());
     }
 
     @Test

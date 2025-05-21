@@ -31,6 +31,7 @@ import static com.whatstheplan.events.utils.Utils.getUserId;
 @RequiredArgsConstructor
 public class EventService {
 
+    private final EmailService emailService;
     private final S3Service s3Service;
     private final EventsRepository eventsRepository;
     private final CategoryRepository categoryRepository;
@@ -183,9 +184,17 @@ public class EventService {
                                             }
                                             return s3Service.deleteFile(event.getImageKey())
                                                     .doOnError(error -> log.error("Error deleting image for event {}: {}", eventId, error.getMessage()))
-                                                    .onErrorResume(error -> Mono.empty());
+                                                    .onErrorResume(error -> Mono.empty())
+                                                    .thenReturn(event);
                                         }
                                 ))
+                .flatMap(event -> eventRegistrationService.getRegisteredUsers(eventId)
+                        .flatMapMany(Flux::fromIterable)
+                        .flatMap(user -> userClient.getUserBasicInfo(event.getOrganizerId())
+                                .flatMap(
+                                        organizer ->
+                                                emailService.sendEventCancellationEmail(user, event, organizer.getUsername())))
+                        .then())
                 .then(eventsRepository.deleteById(eventId))
                 .then(eventCategoryRepository.deleteAllByEventId(eventId))
                 .doOnSuccess(e -> log.info("Successfully deleted event {} and its associated categories", eventId))

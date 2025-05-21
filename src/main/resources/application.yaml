@@ -29,6 +29,31 @@ spring:
     url: jdbc:postgresql://${DB_HOST:localhost}:5432/whatstheplan?currentSchema=events
     user: ${DB_USER}
     password: ${DB_PASSWORD}
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: 5671
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+    ssl:
+      enabled: true
+  cloud:
+    stream:
+      default-binder: rabbit
+      bindings:
+        successfulRegistrationEmail-out-0:
+          destination: mail
+          content-type: application/json
+        cancelledEvent-out-0:
+          destination: mail
+          content-type: application/json
+      rabbit:
+        bindings:
+          successfulRegistrationEmail-out-0:
+            producer:
+              routing-key-expression: registration
+          cancelledEvent-out-0:
+            producer:
+              routing-key-expression: cancellation
 
 aws:
   s3:

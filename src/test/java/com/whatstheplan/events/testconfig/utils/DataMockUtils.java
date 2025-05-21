@@ -95,9 +95,10 @@ public class DataMockUtils {
         };
     }
 
-    public static BasicUserResponse generateBasicUserResponse(String username) {
+    public static BasicUserResponse generateBasicUserResponse(String username, String email) {
         return BasicUserResponse.builder()
                 .username(username)
+                .email(email)
                 .build();
     }
 }

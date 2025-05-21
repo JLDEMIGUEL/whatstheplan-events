@@ -16,6 +16,8 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.stream.binder.test.OutputDestination;
+import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -37,13 +39,15 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
 @DirtiesContext
 @ActiveProfiles("test")
 @AutoConfigureWebTestClient
-@Import(EmbeddedRedisConfig.class)
+@Import({EmbeddedRedisConfig.class, TestChannelBinderConfiguration.class})
 public class BaseIntegrationTest {
 
     public static final UUID USER_ID = UUID.randomUUID();
     public static final String USERNAME = "username";
+    public static final String EMAIL = "email@email.com";
     public final static UUID OTHER_USER_ID = UUID.randomUUID();
     public static final String OTHER_USERNAME = "other-username";
+    public static final String OTHER_EMAIL = "other@email.com";
 
     protected static final SecurityMockServerConfigurers.JwtMutator JWT = mockJwt().jwt(jwt -> jwt
                     .claim("sub", USER_ID)
@@ -79,6 +83,9 @@ public class BaseIntegrationTest {
     @Autowired
     protected ReactiveRedisTemplate<String, Boolean> booleanReactiveRedisTemplate;
 
+    @Autowired
+    protected OutputDestination output;
+
     private static EmbeddedPostgres pg;
 
 
@@ -101,8 +108,8 @@ public class BaseIntegrationTest {
         booleanReactiveRedisTemplate.execute(connection -> connection.serverCommands().flushAll()).blockLast();
 
         authWireMockExtension.stubForToken();
-        userWireMockExtension.stubForUser(USER_ID, USERNAME);
-        userWireMockExtension.stubForUser(OTHER_USER_ID, OTHER_USERNAME);
+        userWireMockExtension.stubForUser(USER_ID, USERNAME, EMAIL);
+        userWireMockExtension.stubForUser(OTHER_USER_ID, OTHER_USERNAME, OTHER_EMAIL);
     }
 
     @AfterAll

@@ -1,4 +1,4 @@
-package com.whatstheplan.events.client.user.response;
+package com.whatstheplan.events.model.email;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BasicUserResponse {
+public class SuccessfulRegistrationEmail {
     private String username;
     private String email;
+    private EventEmailData event;
 }
