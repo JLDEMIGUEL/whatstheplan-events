@@ -2,6 +2,7 @@ package com.whatstheplan.events.model.response;
 
 import com.whatstheplan.events.model.entities.Category;
 import com.whatstheplan.events.model.entities.Event;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -18,8 +19,13 @@ import java.util.UUID;
 @AllArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
+@Schema(description = "Detailed event response including registration status and organizer info")
 public class DetailedEventResponse extends EventResponse {
+
+    @Schema(description = "Indicates if the current user is registered for the event", example = "true")
     private Boolean isRegistered;
+
+    @Schema(description = "Username of the event organizer", example = "organizer_jane")
     private String organizerUsername;
 
     public static DetailedEventResponse fromEntityDetailed(UUID userId, Event event, List<Category> activityTypes, Boolean isRegistered, String organizerUsername) {

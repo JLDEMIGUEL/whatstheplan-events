@@ -28,7 +28,14 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .pathMatchers("/events", "/events/*", "/events/registration", "/events/registration/*")
                         .hasRole("user")
-                        .pathMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        .pathMatchers("/actuator/health",
+                                "/actuator/health/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/webjars/**",
+                                "/swagger-resources/**")
+                        .permitAll()
                         .anyExchange().authenticated())
                 .cors(withDefaults())
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
