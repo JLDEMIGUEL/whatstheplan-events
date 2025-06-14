@@ -283,7 +283,7 @@ class EventsSearchControllerIntegrationTest extends BaseIntegrationTest {
                 Arguments.of(
                         List.of(
                                 new EventData(createEvent(e -> e.dateTime(TODAY.plusDays(1))), List.of()),
-                                new EventData(createEvent(e -> e.dateTime(TODAY.plusMonths(3))), List.of())
+                                new EventData(createEvent(e -> e.dateTime(TODAY.plusMonths(13))), List.of())
                         ),
                         new LinkedMultiValueMap<>(),
                         1,
@@ -347,7 +347,7 @@ class EventsSearchControllerIntegrationTest extends BaseIntegrationTest {
                 Arguments.of(
                         List.of(
                                 new EventData(createEvent(e ->
-                                        e.dateTime(TODAY.plusMonths(3))), List.of())
+                                        e.dateTime(TODAY.plusMonths(13))), List.of())
                         ),
                         new LinkedMultiValueMap<>(),
                         0,

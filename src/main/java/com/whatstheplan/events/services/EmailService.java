@@ -29,7 +29,7 @@ public class EmailService {
         return Mono.zip(userClient.getUserBasicInfo(userId), userClient.getUserBasicInfo(event.getOrganizerId()))
                 .doOnSuccess(t -> {
                     BasicUserResponse user = t.getT1();
-                    BasicUserResponse organizer = t.getT1();
+                    BasicUserResponse organizer = t.getT2();
                     log.info("Sending successful registration email request to RabbitMQ with " +
                                     "for user {}, email {}, and event id {}",
                             user.getUsername(), user.getEmail(), event.getId());
