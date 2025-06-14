@@ -381,7 +381,7 @@ class EventsUpdateControllerIntegrationTest extends BaseIntegrationTest {
                 arguments(
                         validRequest,
                         generateImage(new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47}, "invalid.gif"),
-                        List.of("Invalid image format. Allowed: PNG, JPG, JPEG.")
+                        List.of("Invalid image format. Allowed: PNG, JPG, JPEG, WEBP, SVG, AVIF.")
                 ),
                 // --- Image too large (6MB) ---
                 arguments(

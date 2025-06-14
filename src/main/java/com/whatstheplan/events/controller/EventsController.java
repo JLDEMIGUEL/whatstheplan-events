@@ -165,8 +165,8 @@ public class EventsController {
     }
 
     private void validateImage(FilePart image) {
-        if (!image.filename().matches("(?i).*\\.(png|jpg|jpeg)$")) {
-            throw new FileValidationException("Invalid image format. Allowed: PNG, JPG, JPEG.");
+        if (!image.filename().matches("(?i).*\\.(png|jpg|jpeg|webp|svg|avif)$")) {
+            throw new FileValidationException("Invalid image format. Allowed: PNG, JPG, JPEG, WEBP, SVG, AVIF.");
         }
         if (image.headers().getContentLength() > 5 * 1024 * 1024) {
             throw new FileValidationException("Image size exceeds 5MB.");
