@@ -50,10 +50,10 @@ spring:
         bindings:
           successfulRegistrationEmail-out-0:
             producer:
-              routing-key-expression: registration
+              routing-key: registration
           cancelledEvent-out-0:
             producer:
-              routing-key-expression: cancellation
+              routing-key: cancellation
 
 aws:
   s3:
