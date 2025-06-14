@@ -36,7 +36,7 @@ public class EventFilterRequest {
 
     @Builder.Default
     @Schema(description = "End of the date-time range for the event", example = "2025-08-01T00:00:00")
-    private LocalDateTime dateTimeTo = LocalDateTime.now().plusMonths(2);
+    private LocalDateTime dateTimeTo = LocalDateTime.now().plusMonths(12);
 
     @Builder.Default
     @Schema(description = "List of activity types to filter by", example = "[\"sports\", \"music\"]")
